@@ -7,7 +7,6 @@ from .data.pipeline import DataPipeline
 from .metrics.calculator.pipeline import MetricCalculationPipeline
 from .metrics.scoring_pipeline import ScoringPipeline
 
-# Configure Loguru
 logger.add("performance_analysis.log", rotation="500 MB", level="INFO")
 
 
