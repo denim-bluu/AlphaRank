@@ -21,18 +21,18 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+          key: ${{ runner.os }}-uv-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-uv-
 
       - name: Install UV
         uses: astral-sh/setup-uv@v3
 
-      - name: Install the project
+      - name: Install dependencies
         run: |
           uv venv
           uv pip install --upgrade pip
-          uv sync --all-extras --dev
+          uv pip install .
 
       - name: Run tests with coverage
         run: uv run pytest --cov=app --cov-report=xml
@@ -42,8 +42,3 @@ jobs:
 
       - name: Run Black
         run: uv run black --check .
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
