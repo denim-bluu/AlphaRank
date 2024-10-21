@@ -24,6 +24,8 @@ jobs:
             ${{ runner.os }}-uv-
       - name: Install UV
         uses: astral-sh/setup-uv@v3
+      - name: Set up Python
+        run: uv python install
       - name: Install the project
         run: uv sync --all-extras --dev
 
