@@ -62,7 +62,7 @@ class PerformanceAnalysisOrchestrator:
                 ]
             )
 
-            logger.info("Performance analysis completed successfully")
+            logger.success("✅ Performance analysis completed successfully")
             return final_results.collect()  # Materialize the LazyFrame
 
         except Exception as e:
