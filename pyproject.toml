@@ -1,0 +1,20 @@
+[project]
+name = "alpharank"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "loguru>=0.7.2",
+    "numpy>=2.1.2",
+    "pandera>=0.20.4",
+    "polars>=1.9.0",
+    "pyarrow>=17.0.0",
+    "pytest>=8.3.3",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ptpython>=3.0.29",
+    "ruff>=0.7.0",
+]
