@@ -2,7 +2,11 @@ from typing import Dict, Type
 
 from .base import MetricCalculator
 from .performance_metrics import BetaCalculator, ExcessReturnCalculator
-from .ratio_metrics import InformationRatioCalculator, SharpeRatioCalculator
+from .ratio_metrics import (
+    InformationRatioCalculator,
+    SharpeRatioCalculator,
+    OmegaRatioCalculator,
+)
 from .risk_metrics import TrackingErrorCalculator, VolatilityCalculator
 
 
@@ -16,6 +20,7 @@ class MetricCalculatorFactory:
         "tracking_error": TrackingErrorCalculator,
         "sharpe_ratio": SharpeRatioCalculator,
         "information_ratio": InformationRatioCalculator,
+        "omega_ratio": OmegaRatioCalculator,
     }
 
     @classmethod
@@ -50,5 +55,14 @@ class MetricCalculatorFactory:
         return calculator_class(**kwargs)
 
     @classmethod
-    def get_calculators(cls) -> Dict[str, Type[MetricCalculator]]:
-        return cls._calculators
+    def create_all_calculators(cls, **kwargs) -> list[MetricCalculator]:
+        """
+        Create instances of all available calculators.
+
+        Args:
+            **kwargs: Additional arguments for the calculator constructors.
+
+        Returns:
+            list[MetricCalculator]: List of calculator instances.
+        """
+        return [cls.create_calculator(name, **kwargs) for name in cls._calculators]

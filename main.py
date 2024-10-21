@@ -12,27 +12,14 @@ from src.orchestrator import PerformanceAnalysisOrchestrator
 data_source = ParquetDataSource("data/mock_performance_data.parquet")
 validator = DataValidator()
 
-steps = [
-    pp.SortStep(),
-    pp.RollingMeanReturnStep(),
-    pp.RollingMeanBenchmarkReturnStep(),
-    pp.RollingStdReturnStep(),
-    pp.RollingStdBenchmarkReturnStep(),
-]
 
-preprocessor = pp.DataPreprocessor(steps)
+preprocessor = pp.DataPreprocessor(pp.PreprocessorStepFactory.create_all_steps())
 
 data_pipeline = DataPipeline(data_source, validator, preprocessor)
 
-factory = MetricCalculatorFactory()
-calculators = [
-    factory.create_calculator("excess_return"),
-    factory.create_calculator("beta"),
-    factory.create_calculator("volatility"),
-    factory.create_calculator("sharpe_ratio", risk_free_rate=0.03),
-    factory.create_calculator("information_ratio"),
-]
-metric_pipeline = MetricCalculationPipeline(calculators)
+metric_pipeline = MetricCalculationPipeline(
+    MetricCalculatorFactory.create_all_calculators()
+)
 
 standardizer = StandardizerFactory.create_standardizer("zscore")
 aggregator = WeightedSumAggregator()
@@ -47,4 +34,4 @@ orchestrator = PerformanceAnalysisOrchestrator(
     scoring_pipeline=scoring_pipeline,
 )
 
-orchestrator.run_analysis(metric_columns, weights)
+result = orchestrator.run_analysis(metric_columns, weights)

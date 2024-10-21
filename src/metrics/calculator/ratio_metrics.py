@@ -47,16 +47,6 @@ class InformationRatioCalculator(MetricCalculator):
 
     Formula:
         IR = (mean(Return) - mean(Benchmark_Return)) / (std(Return - Benchmark_Return) * sqrt(12))
-
-    Methods:
-        calculate(data: pl.LazyFrame) -> pl.LazyFrame:
-            Calculates the Information Ratio for each strategy in the provided data.
-
-    Args:
-        data (pl.LazyFrame): A Polars LazyFrame containing the columns "Return", "Benchmark_Return", and "Strategy_ID".
-
-    Returns:
-        pl.LazyFrame: A Polars LazyFrame with an additional column "Information_Ratio" containing the calculated Information Ratio for each strategy.
     """
 
     def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
@@ -68,4 +58,64 @@ class InformationRatioCalculator(MetricCalculator):
                     * np.sqrt(12)
                 ).alias("Information_Ratio")
             ]
+        )
+
+
+class SortinoRatioCalculator(MetricCalculator):
+    """
+    A calculator for the Sortino Ratio metric.
+
+    The Sortino Ratio is a measure of risk-adjusted return that focuses on the downside risk of an investment. It is calculated as the difference between the return of an investment and the risk-free rate, divided by the standard deviation of the investment's negative returns. The formula is:
+
+    Formula:
+        Sortino Ratio = (Mean(Return) - Risk-Free Rate) / Std(Negative_Return) * sqrt(12)
+    """
+
+    def __init__(self, risk_free_rate: float = 0.02):
+        self.risk_free_rate = risk_free_rate / 12  # Monthly risk-free rate
+
+    def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        negative_returns = pl.when(pl.col("Return") < 0).then(pl.col("Return"))
+        return data.group_by("Strategy_ID").agg(
+            [
+                (
+                    (pl.col("Return").mean() - self.risk_free_rate)
+                    / negative_returns.std()
+                    * np.sqrt(12)
+                ).alias("Sortino_Ratio")
+            ]
+        )
+
+
+class OmegaRatioCalculator(MetricCalculator):
+    """
+    A calculator for the Omega Ratio metric.
+
+    The Omega Ratio is a risk-adjusted performance measure that evaluates the probability-weighted return distribution of an investment. It is calculated as the ratio of the expected gains to the expected losses, where gains are defined as returns above a specified threshold and losses are returns below the threshold.
+
+    Formula:
+        Omega Ratio = sum(Gains) / sum(Losses)
+    """
+
+    def __init__(self, threshold: float = 0.0):
+        self.threshold = threshold
+
+    def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        excess_returns = pl.col("Return") - pl.col("Benchmark_Return")
+        gains = (
+            pl.when(excess_returns > self.threshold)
+            .then(excess_returns - self.threshold)
+            .otherwise(0)
+        )
+        losses = (
+            pl.when(excess_returns <= self.threshold)
+            .then(self.threshold - excess_returns)
+            .otherwise(0)
+        )
+        return (
+            data.with_columns(gains.alias("Gains"), losses.alias("Losses"))
+            .group_by("Strategy_ID")
+            .agg(
+                [(pl.col("Gains").sum() / pl.col("Losses").sum()).alias("Omega_Ratio")]
+            )
         )

@@ -62,6 +62,28 @@ class RollingStdBenchmarkReturnStep(RollingOperationStep):
         )
 
 
+class PreprocessorStepFactory:
+    # Order matters
+    __steps = {
+        "SortStep": SortStep,
+        "RollingMeanReturnStep": RollingMeanReturnStep,
+        "RollingMeanBenchmarkReturnStep": RollingMeanBenchmarkReturnStep,
+        "RollingStdReturnStep": RollingStdReturnStep,
+        "RollingStdBenchmarkReturnStep": RollingStdBenchmarkReturnStep,
+    }
+
+    @classmethod
+    def create_step(cls, name: str) -> PreprocessingStep:
+        step_class = cls.__steps.get(name)
+        if step_class is None:
+            raise ValueError(f"Unknown preprocessing step: {name}")
+        return step_class()
+
+    @classmethod
+    def create_all_steps(cls) -> list[PreprocessingStep]:
+        return [cls.create_step(name) for name in cls.__steps]
+
+
 class DataPreprocessor:
     def __init__(self, steps: list[PreprocessingStep]):
         self.steps = steps
