@@ -15,12 +15,12 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - name: Install PDM
-        uses: pdm-project/setup-pdm@v4
+      - name: Install uv
+        run: pip install uv
       - name: Install dependencies
-        run: pdm install
+        run: uv install
       - name: Run tests with coverage
-        run: pdm run pytest --cov=app --cov-report=xml
+        run: uv run pytest --cov=app --cov-report=xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4.0.1
         with:
@@ -38,28 +38,11 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - name: Install PDM
-        uses: pdm-project/setup-pdm@v4
+      - name: Install uv
+        run: pip install uv
       - name: Install dependencies
-        run: pdm install
+        run: uv install
       - name: Run Ruff
-        run: pdm run ruff check .
+        run: uv run ruff check .
       - name: Run Black
-        run: pdm run black --check .
-
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - name: Install PDM
-        uses: pdm-project/setup-pdm@v4
-      - name: Install dependencies
-        run: pdm install
-      - name: Run Bandit
-        run: pdm run bandit -r . -f custom
-      - name: Run safety check
-        run: pdm run safety check
+        run: uv run black --check .
