@@ -1,6 +1,6 @@
 from .base import MetricStandardizer
-from .parametric import ZScoreStandardizer
 from .non_parametric import MinMaxStandardizer
+from .parametric import ZScoreStandardizer
 
 
 class StandardizerFactory:

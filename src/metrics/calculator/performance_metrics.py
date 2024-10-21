@@ -59,7 +59,7 @@ class BetaCalculator(MetricCalculator):
         return data.group_by("Strategy_ID").agg(
             [
                 (
-                    pl.cov(pl.col("Return"), (pl.col("Benchmark_Return")))
+                    pl.cov(pl.col("Return"), pl.col("Benchmark_Return"))
                     / pl.col("Benchmark_Return").var()
                 ).alias("Beta")
             ]

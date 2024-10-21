@@ -1,5 +1,6 @@
-from .base import MetricStandardizer
 import polars as pl
+
+from .base import MetricStandardizer
 
 
 class MinMaxStandardizer(MetricStandardizer):
