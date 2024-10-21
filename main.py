@@ -7,6 +7,7 @@ from src.metrics.calculator.factory import MetricCalculatorFactory
 from src.metrics.calculator.pipeline import MetricCalculationPipeline
 from src.metrics.scoring_pipeline import ScoringPipeline
 from src.metrics.standardizer.factory import StandardizerFactory
+from src.orchestrator import PerformanceAnalysisOrchestrator
 
 data_source = ParquetDataSource("data/mock_performance_data.parquet")
 validator = DataValidator()
@@ -21,8 +22,7 @@ steps = [
 
 preprocessor = pp.DataPreprocessor(steps)
 
-pipeline = DataPipeline(data_source, validator, preprocessor)
-processed_data = pipeline.run()
+data_pipeline = DataPipeline(data_source, validator, preprocessor)
 
 factory = MetricCalculatorFactory()
 calculators = [
@@ -32,15 +32,19 @@ calculators = [
     factory.create_calculator("sharpe_ratio", risk_free_rate=0.03),
     factory.create_calculator("information_ratio"),
 ]
-pipeline = MetricCalculationPipeline(calculators)
-calculated_metrics = pipeline.run(processed_data)
+metric_pipeline = MetricCalculationPipeline(calculators)
 
 standardizer = StandardizerFactory.create_standardizer("zscore")
 aggregator = WeightedSumAggregator()
-pipeline = ScoringPipeline(standardizer, aggregator)
+scoring_pipeline = ScoringPipeline(standardizer, aggregator)
 
 metric_columns = ["Excess_Return", "Sharpe_Ratio", "Information_Ratio"]
 weights = {"Excess_Return": 0.4, "Sharpe_Ratio": 0.3, "Information_Ratio": 0.3}
 
-result = pipeline.run(calculated_metrics, metric_columns, weights)
-final_result = result.collect()
+orchestrator = PerformanceAnalysisOrchestrator(
+    data_pipeline=data_pipeline,
+    metric_pipeline=metric_pipeline,
+    scoring_pipeline=scoring_pipeline,
+)
+
+orchestrator.run_analysis(metric_columns, weights)

@@ -8,9 +8,11 @@ dependencies = [
     "loguru>=0.7.2",
     "numpy>=2.1.2",
     "pandera>=0.20.4",
+    "plotly>=5.24.1",
     "polars>=1.9.0",
     "pyarrow>=17.0.0",
     "pytest>=8.3.3",
+    "streamlit>=1.39.0",
 ]
 
 [tool.uv]
