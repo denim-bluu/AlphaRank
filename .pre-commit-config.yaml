@@ -7,14 +7,16 @@ on:
     branches: [main]
 
 jobs:
-  setup:
+  test-and-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+
       - name: Cache UV dependencies
         uses: actions/cache@v3
         with:
@@ -22,39 +24,26 @@ jobs:
           key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
           restore-keys: |
             ${{ runner.os }}-uv-
+
       - name: Install UV
         uses: astral-sh/setup-uv@v3
-      - name: Set up Python
-        run: uv python install
-      - name: Install the project
-        run: uv sync --all-extras --dev
 
-  test:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Restore UV dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
+      - name: Install the project
+        run: |
+          uv venv
+          uv pip install --upgrade pip
+          uv sync --all-extras --dev
+
       - name: Run tests with coverage
         run: uv run pytest --cov=app --cov-report=xml
 
-  lint:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Restore UV dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/uv
-          key: ${{ runner.os }}-uv-${{ hashFiles('**/uv.lock') }}
       - name: Run Ruff
         run: uv run ruff check .
+
       - name: Run Black
         run: uv run black --check .
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
