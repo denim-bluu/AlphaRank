@@ -17,6 +17,7 @@ dependencies = [
 
 [tool.uv]
 dev-dependencies = [
+    "pre-commit>=4.0.1",
     "ptpython>=3.0.29",
     "ruff>=0.7.0",
 ]
