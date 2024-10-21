@@ -1,5 +1,6 @@
 import polars as pl
 import streamlit as st
+
 from src.data import preprocessor as pp
 from src.data.pipeline import DataPipeline
 from src.data.source import ParquetDataSource

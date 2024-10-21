@@ -1,4 +1,5 @@
 import streamlit as st
+
 from frontend.utils import load_data
 
 

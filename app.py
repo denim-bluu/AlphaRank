@@ -1,5 +1,6 @@
 import streamlit as st
-from frontend.pages import data_input, configuration, analysis, results
+
+from frontend.pages import analysis, configuration, data_input, results
 
 
 def initialize_session_state():

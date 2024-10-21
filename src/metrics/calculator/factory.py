@@ -4,8 +4,8 @@ from .base import MetricCalculator
 from .performance_metrics import BetaCalculator, ExcessReturnCalculator
 from .ratio_metrics import (
     InformationRatioCalculator,
-    SharpeRatioCalculator,
     OmegaRatioCalculator,
+    SharpeRatioCalculator,
 )
 from .risk_metrics import TrackingErrorCalculator, VolatilityCalculator
 
