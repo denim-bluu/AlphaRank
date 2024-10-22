@@ -11,6 +11,7 @@ def test_excess_return_calculator():
     # Sample data
     data = pl.LazyFrame(
         {
+            "PM_ID": ["A", "A", "A", "A"],
             "Strategy_ID": [1, 1, 2, 2],
             "Return": [0.05, 0.07, 0.10, 0.12],
             "Benchmark_Return": [0.03, 0.04, 0.08, 0.09],
@@ -19,7 +20,11 @@ def test_excess_return_calculator():
 
     # Expected result
     expected_data = pl.DataFrame(
-        {"Strategy_ID": [1, 2], "Excess_Return": [0.025, 0.025]}
+        {
+            "PM_ID": ["A", "A"],
+            "Strategy_ID": [1, 2],
+            "Excess_Return": [0.025, 0.025],
+        }
     )
 
     # Instantiate and calculate
@@ -36,6 +41,7 @@ def test_beta_calculator():
     # Sample data
     data = pl.LazyFrame(
         {
+            "PM_ID": ["A", "A", "A", "A"],
             "Strategy_ID": [1, 1, 2, 2],
             "Return": [0.06, 0.08, 0.16, 0.18],
             "Benchmark_Return": [0.03, 0.04, 0.08, 0.09],
@@ -45,6 +51,7 @@ def test_beta_calculator():
     # Expected result
     expected_data = pl.DataFrame(
         {
+            "PM_ID": ["A", "A"],
             "Strategy_ID": [1, 2],
             "Beta": [
                 2.0,

@@ -3,16 +3,23 @@ from typing import Dict, List
 import polars as pl
 from loguru import logger
 
-from .aggregator.base import MetricAggregator
+from .portfolio_aggregator.base import PortfolioScoreAggregator
 from .standardizer.base import MetricStandardizer
+from .strategy_aggregator.base import StrategyScoreAggregator
 
 
 class ScoringPipeline:
     """Pipeline for standardizing metrics and aggregating them into a final score."""
 
-    def __init__(self, standardizer: MetricStandardizer, aggregator: MetricAggregator):
+    def __init__(
+        self,
+        standardizer: MetricStandardizer,
+        strategy_aggregator: StrategyScoreAggregator,
+        portfolio_aggregator: PortfolioScoreAggregator,
+    ):
         self.standardizer = standardizer
-        self.aggregator = aggregator
+        self.strategy_aggregator = strategy_aggregator
+        self.portfolio_aggregator = portfolio_aggregator
 
     def run(
         self, data: pl.LazyFrame, metric_columns: List[str], weights: Dict[str, float]
@@ -37,26 +44,11 @@ class ScoringPipeline:
             _weights = {
                 f"{col}_standardized": weight for col, weight in weights.items()
             }
-
-            # Check if the weights sum up to 1
-            if sum(_weights.values()) != 1:
-                logger.error("Weights must sum up to 1")
-                raise ValueError("Weights must sum up to 1")
-
-            # Check if the weights are positive
-            if any(weight < 0 for weight in _weights.values()):
-                logger.error("Weights must be positive")
-                raise ValueError("Weights must be positive")
-
-            # Check if columns are present in the data
-            for col in standardized_columns:
-                if col not in standardized_data.columns:
-                    logger.error(f"Column {col} not found in the data")
-                    raise ValueError(f"Column {col} not found in the data")
-
-            scored_data = self.aggregator.aggregate(
+            scored_data = self.strategy_aggregator.aggregate(
                 standardized_data, standardized_columns, _weights
             )
+
+            scored_data = self.portfolio_aggregator.aggregate(scored_data)
 
             return scored_data
 

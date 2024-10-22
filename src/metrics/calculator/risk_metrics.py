@@ -23,7 +23,7 @@ class VolatilityCalculator(MetricCalculator):
     """
 
     def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.group_by("Strategy_ID").agg(
+        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
             [pl.col("Return").std().alias("Volatility")]
         )
 
@@ -49,7 +49,7 @@ class TrackingErrorCalculator(MetricCalculator):
     """
 
     def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.group_by("Strategy_ID").agg(
+        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
             [
                 (
                     (pl.col("Return") - pl.col("Benchmark_Return")).std() * np.sqrt(12)

@@ -28,10 +28,10 @@ def test_data_pipeline(sample_data):
 
     pipeline = DataPipeline(mock_source, validator, preprocessor)
     result = pipeline.run()
-
+    columns = result.collect_schema()
     assert isinstance(result, pl.LazyFrame)
-    assert "Strategy_ID" in result.columns
-    assert "Date" in result.columns
-    assert "Return" in result.columns
-    assert "Benchmark_Return" in result.columns
-    assert "AUM" in result.columns
+    assert "Strategy_ID" in columns
+    assert "Date" in columns
+    assert "Return" in columns
+    assert "Benchmark_Return" in columns
+    assert "AUM" in columns

@@ -25,7 +25,7 @@ class ExcessReturnCalculator(MetricCalculator):
     """
 
     def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.group_by("Strategy_ID").agg(
+        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
             [
                 ((pl.col("Return") - pl.col("Benchmark_Return")).mean()).alias(
                     "Excess_Return"
@@ -56,7 +56,7 @@ class BetaCalculator(MetricCalculator):
     """
 
     def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.group_by("Strategy_ID").agg(
+        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
             [
                 (
                     pl.cov(pl.col("Return"), pl.col("Benchmark_Return"))
