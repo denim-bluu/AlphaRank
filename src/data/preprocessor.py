@@ -6,7 +6,15 @@ import polars as pl
 class PreprocessingStep(ABC):
     @abstractmethod
     def apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
-        pass
+        """Apply preprocessing step to the LazyFrame.
+
+        Args:
+            lf: Input LazyFrame to process
+
+        Returns:
+            Processed LazyFrame
+        """
+        raise NotImplementedError
 
 
 class SortStep(PreprocessingStep):
@@ -63,8 +71,7 @@ class RollingStdBenchmarkReturnStep(RollingOperationStep):
 
 
 class PreprocessorStepFactory:
-    # Order matters
-    __steps = {
+    __steps: dict[str, type[PreprocessingStep]] = {
         "SortStep": SortStep,
         "RollingMeanReturnStep": RollingMeanReturnStep,
         "RollingMeanBenchmarkReturnStep": RollingMeanBenchmarkReturnStep,
