@@ -8,6 +8,7 @@ from src.metrics.calculator.ratio_metrics import InformationRatioCalculator
 def test_information_ratio_calculator(sample_data):
     sample_data = pl.LazyFrame(
         {
+            "PM_ID": ["A", "A", "A", "A"],
             "Strategy_ID": ["A", "A", "B", "B"],
             "Return": [0.05, 0.10, 0.02, 0.03],
             "Benchmark_Return": [0.03, 0.04, 0.04, 0.02],
@@ -26,6 +27,6 @@ def test_information_ratio_calculator(sample_data):
         "B": (-0.005) / 0.021213 * np.sqrt(12),
     }
     for row in result.iter_rows():
-        strategy_id = row[0]
-        calculated_ratio = row[1]
+        strategy_id = row[1]
+        calculated_ratio = row[2]
         assert pytest.approx(calculated_ratio, rel=1e-2) == expected_ratios[strategy_id]
