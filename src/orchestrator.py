@@ -4,7 +4,7 @@ import polars as pl
 from loguru import logger
 
 from .data.pipeline import DataPipeline
-from .metrics.calculator.pipeline import MetricCalculationPipeline
+from .metrics.calculator.pipeline import CalculationPipeline
 from .metrics.scoring_pipeline import ScoringPipeline
 
 logger.add("performance_analysis.log", rotation="500 MB", level="INFO")
@@ -16,11 +16,11 @@ class PerformanceAnalysisOrchestrator:
     def __init__(
         self,
         data_pipeline: DataPipeline,
-        metric_pipeline: MetricCalculationPipeline,
+        calculation_pipeline: CalculationPipeline,
         scoring_pipeline: ScoringPipeline,
     ):
         self.data_pipeline = data_pipeline
-        self.metric_pipeline = metric_pipeline
+        self.calculation_pipeline = calculation_pipeline
         self.scoring_pipeline = scoring_pipeline
 
     def run_analysis(
@@ -45,7 +45,7 @@ class PerformanceAnalysisOrchestrator:
 
             # Calculate metrics
             logger.info("Calculating performance metrics")
-            metric_results = self.metric_pipeline.run(processed_data)
+            metric_results = self.calculation_pipeline.run(processed_data)
 
             # Score and rank strategies
             logger.info("Scoring and ranking strategies")
@@ -55,11 +55,7 @@ class PerformanceAnalysisOrchestrator:
 
             # Add rankings
             final_results = scored_results.with_columns(
-                [
-                    pl.col("aggregated_score")
-                    .rank(method="dense", descending=True)
-                    .alias("rank")
-                ]
+                [pl.col("PM_Score").rank(method="dense").alias("Rank")]
             )
 
             logger.success("✅ Performance analysis completed successfully")

@@ -5,9 +5,10 @@ from src.data import preprocessor as pp
 from src.data.pipeline import DataPipeline
 from src.data.source import ParquetDataSource
 from src.data.validator import DataValidator
-from src.metrics.aggregator.weighted_sum import WeightedSumAggregator
+from src.metrics.strategy_aggregator.strategy import StrategyScoreAggregator
+from src.metrics.portfolio_aggregator.portfolio import PMScoreAggregator
 from src.metrics.calculator.factory import MetricCalculatorFactory
-from src.metrics.calculator.pipeline import MetricCalculationPipeline
+from src.metrics.calculator.pipeline import CalculationPipeline
 from src.metrics.scoring_pipeline import ScoringPipeline
 from src.metrics.standardizer.factory import StandardizerFactory
 from src.orchestrator import PerformanceAnalysisOrchestrator
@@ -54,19 +55,22 @@ def run_analysis():
                 "sharpe_ratio", risk_free_rate=st.session_state.risk_free_rate
             )
         )
-    metric_pipeline = MetricCalculationPipeline(calculators)
+    metric_pipeline = CalculationPipeline(calculators)
 
     # Set up scoring pipeline
     standardizer = StandardizerFactory.create_standardizer(
         st.session_state.standardizer
     )
-    aggregator = WeightedSumAggregator()
-    scoring_pipeline = ScoringPipeline(standardizer, aggregator)
+    strategy_aggregator = StrategyScoreAggregator()
+    pm_score_aggregator = PMScoreAggregator()
+    scoring_pipeline = ScoringPipeline(
+        standardizer, strategy_aggregator, pm_score_aggregator
+    )
 
     # Set up and run orchestrator
     orchestrator = PerformanceAnalysisOrchestrator(
         data_pipeline=data_pipeline,
-        metric_pipeline=metric_pipeline,
+        calculation_pipeline=metric_pipeline,
         scoring_pipeline=scoring_pipeline,
     )
 

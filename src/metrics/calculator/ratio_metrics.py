@@ -28,7 +28,7 @@ class SharpeRatioCalculator(MetricCalculator):
         self.risk_free_rate = risk_free_rate / 12  # Monthly risk-free rate
 
     def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.group_by("Strategy_ID").agg(
+        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
             [
                 (
                     (pl.col("Return").mean() - self.risk_free_rate)
@@ -50,7 +50,7 @@ class InformationRatioCalculator(MetricCalculator):
     """
 
     def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.group_by("Strategy_ID").agg(
+        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
             [
                 (
                     (pl.col("Return").mean() - pl.col("Benchmark_Return").mean())
@@ -76,7 +76,7 @@ class SortinoRatioCalculator(MetricCalculator):
 
     def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
         negative_returns = pl.when(pl.col("Return") < 0).then(pl.col("Return"))
-        return data.group_by("Strategy_ID").agg(
+        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
             [
                 (
                     (pl.col("Return").mean() - self.risk_free_rate)
@@ -114,7 +114,7 @@ class OmegaRatioCalculator(MetricCalculator):
         )
         return (
             data.with_columns(gains.alias("Gains"), losses.alias("Losses"))
-            .group_by("Strategy_ID")
+            .group_by(["PM_ID", "Strategy_ID"])
             .agg(
                 [(pl.col("Gains").sum() / pl.col("Losses").sum()).alias("Omega_Ratio")]
             )

@@ -6,7 +6,7 @@ from loguru import logger
 from .base import MetricCalculator
 
 
-class MetricCalculationPipeline:
+class CalculationPipeline:
     """Pipeline for calculating multiple metrics."""
 
     def __init__(self, calculators: List[MetricCalculator]):
@@ -41,9 +41,11 @@ class MetricCalculationPipeline:
         combined_results = results[0]
         for result in results[1:]:
             combined_results = combined_results.join(
-                result, on="Strategy_ID", how="outer"
+                result, on=["PM_ID", "Strategy_ID"], how="outer"
             )
             # Drop the duplicate Strategy_ID column
-            combined_results = combined_results.drop("Strategy_ID_right")
+            combined_results = combined_results.drop(
+                ["PM_ID_right", "Strategy_ID_right"]
+            )
 
         return combined_results

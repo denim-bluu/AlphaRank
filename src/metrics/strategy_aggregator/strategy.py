@@ -1,14 +1,13 @@
 from typing import Dict, List
-
 import polars as pl
 
-from .base import MetricAggregator
+from .base import StrategyScoreAggregator
 
 
-class WeightedSumAggregator(MetricAggregator):
+class StrategyScoreAggregator(StrategyScoreAggregator):
     """Aggregator that uses a weighted sum of metrics."""
 
-    def aggregate(
+    def _aggregate(
         self, data: pl.LazyFrame, metric_columns: List[str], weights: Dict[str, float]
     ) -> pl.LazyFrame:
         weighted_sum_expr = sum(
@@ -16,4 +15,4 @@ class WeightedSumAggregator(MetricAggregator):
         )
         if not isinstance(weighted_sum_expr, pl.Expr):
             weighted_sum_expr = pl.lit(weighted_sum_expr)
-        return data.with_columns([weighted_sum_expr.alias("aggregated_score")])
+        return data.with_columns([weighted_sum_expr.alias("Strategy_Score")])
