@@ -1,4 +1,4 @@
-default: lint type_check test
+dev: lint type_check test
 
 alias t := test
 
