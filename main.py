@@ -2,12 +2,12 @@ from src.data import preprocessor as pp
 from src.data.pipeline import DataPipeline
 from src.data.source import ParquetDataSource
 from src.data.validator import DataValidator
-from src.metrics.strategy_aggregator.strategy import StrategyScoreAggregator
-from src.metrics.portfolio_aggregator.portfolio import PMScoreAggregator
 from src.metrics.calculator.factory import MetricCalculatorFactory
 from src.metrics.calculator.pipeline import CalculationPipeline
+from src.metrics.portfolio_aggregator.portfolio import PMScoreAggregator
 from src.metrics.scoring_pipeline import ScoringPipeline
 from src.metrics.standardizer.factory import StandardizerFactory
+from src.metrics.strategy_aggregator.strategy import WeightedSumScoreAggregator
 from src.orchestrator import PerformanceAnalysisOrchestrator
 
 data_source = ParquetDataSource("data/mock_performance_data.parquet")
@@ -21,7 +21,7 @@ data_pipeline = DataPipeline(data_source, validator, preprocessor)
 metric_pipeline = CalculationPipeline(MetricCalculatorFactory.create_all_calculators())
 
 standardizer = StandardizerFactory.create_standardizer("zscore")
-strategy_aggregator = StrategyScoreAggregator()
+strategy_aggregator = WeightedSumScoreAggregator()
 portfolio_aggregator = PMScoreAggregator()
 
 scoring_pipeline = ScoringPipeline(

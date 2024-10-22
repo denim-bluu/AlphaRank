@@ -5,12 +5,12 @@ from src.data import preprocessor as pp
 from src.data.pipeline import DataPipeline
 from src.data.source import ParquetDataSource
 from src.data.validator import DataValidator
-from src.metrics.strategy_aggregator.strategy import StrategyScoreAggregator
-from src.metrics.portfolio_aggregator.portfolio import PMScoreAggregator
 from src.metrics.calculator.factory import MetricCalculatorFactory
 from src.metrics.calculator.pipeline import CalculationPipeline
+from src.metrics.portfolio_aggregator.portfolio import PMScoreAggregator
 from src.metrics.scoring_pipeline import ScoringPipeline
 from src.metrics.standardizer.factory import StandardizerFactory
+from src.metrics.strategy_aggregator.strategy import WeightedSumScoreAggregator
 from src.orchestrator import PerformanceAnalysisOrchestrator
 
 
@@ -61,7 +61,7 @@ def run_analysis():
     standardizer = StandardizerFactory.create_standardizer(
         st.session_state.standardizer
     )
-    strategy_aggregator = StrategyScoreAggregator()
+    strategy_aggregator = WeightedSumScoreAggregator()
     pm_score_aggregator = PMScoreAggregator()
     scoring_pipeline = ScoringPipeline(
         standardizer, strategy_aggregator, pm_score_aggregator

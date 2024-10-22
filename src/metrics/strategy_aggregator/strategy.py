@@ -1,10 +1,11 @@
 from typing import Dict, List
+
 import polars as pl
 
 from .base import StrategyScoreAggregator
 
 
-class StrategyScoreAggregator(StrategyScoreAggregator):
+class WeightedSumScoreAggregator(StrategyScoreAggregator):
     """Aggregator that uses a weighted sum of metrics."""
 
     def _aggregate(

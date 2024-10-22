@@ -4,8 +4,8 @@ import polars as pl
 from loguru import logger
 
 from .portfolio_aggregator.base import PortfolioScoreAggregator
-from .strategy_aggregator.base import StrategyScoreAggregator
 from .standardizer.base import MetricStandardizer
+from .strategy_aggregator.base import StrategyScoreAggregator
 
 
 class ScoringPipeline:
