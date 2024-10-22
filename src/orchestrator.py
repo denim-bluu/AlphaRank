@@ -55,12 +55,12 @@ class PerformanceAnalysisOrchestrator:
 
             # Add rankings
             final_results = scored_results.with_columns(
-                [pl.col("PM_Score").rank(method="dense").alias("Rank")]
-            )
+                [pl.col("PM_Score").rank(method="dense", descending=True).alias("Rank")]
+            ).sort("Rank")
 
             logger.success("✅ Performance analysis completed successfully")
-            return final_results.collect()  # Materialize the LazyFrame
+            return final_results.collect()
 
         except Exception as e:
             logger.error(f"An error occurred during performance analysis: {str(e)}")
-            raise
+            raise e

@@ -1,3 +1,4 @@
+from typing import Optional
 import numpy as np
 import polars as pl
 
@@ -5,30 +6,48 @@ from .base import MetricCalculator
 
 
 class SharpeRatioCalculator(MetricCalculator):
-    """
-    A calculator for the Sharpe Ratio metric.
+    """Calculator for Sharpe ratio metric.
 
-    The Sharpe Ratio is a measure of risk-adjusted return. It is calculated as the
-    difference between the return of an investment and the risk-free rate, divided
-    by the standard deviation of the investment's return. The formula is:
+    Calculates the Sharpe ratio, which measures risk-adjusted return relative
+    to the risk-free rate.
 
-        Sharpe Ratio = (Mean(Return) - Risk-Free Rate) / Std(Return) * sqrt(12)
+    Formula:
+        Sharpe Ratio = (Mean(Return) - Risk_Free_Rate) / Std(Return) * sqrt(12)
 
     Attributes:
-        risk_free_rate (float): The annual risk-free rate, default is 0.02 (2%).
+        name (str): Name of the calculator.
+        required_columns (Set[str]): Required columns for calculation.
+        risk_free_rate (float): Annual risk-free rate.
 
-    Methods:
-        calculate(data: pl.LazyFrame) -> pl.LazyFrame:
-            Calculates the Sharpe Ratio for each strategy in the provided data.
-            The data should contain a column named "Return" and a column named
-            "Strategy_ID".
+    Example:
+        ```python
+        calculator = SharpeRatioCalculator(risk_free_rate=0.02)
+        result = calculator.calculate(data)
+        ```
     """
 
-    def __init__(self, risk_free_rate: float = 0.02):
-        self.risk_free_rate = risk_free_rate / 12  # Monthly risk-free rate
+    def __init__(
+        self, risk_free_rate: float = 0.02, name: Optional[str] = None
+    ) -> None:
+        """Initialize the SharpeRatioCalculator.
 
-    def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
+        Args:
+            risk_free_rate: Annual risk-free rate (default: 2%).
+            name: Optional custom name for the calculator.
+        """
+        super().__init__(required_columns={"Return"}, name=name)
+        self.risk_free_rate = risk_free_rate / 12  # Convert to monthly
+
+    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        """Calculate Sharpe ratio for the given data.
+
+        Args:
+            data: LazyFrame containing Return column.
+
+        Returns:
+            LazyFrame with added Sharpe_Ratio column.
+        """
+        return data.group_by(self.group_by_columns).agg(
             [
                 (
                     (pl.col("Return").mean() - self.risk_free_rate)
@@ -40,17 +59,44 @@ class SharpeRatioCalculator(MetricCalculator):
 
 
 class InformationRatioCalculator(MetricCalculator):
-    """
-    A calculator for the Information Ratio metric.
+    """Calculator for Information ratio metric.
 
-    The Information Ratio (IR) measures the risk-adjusted return of a financial asset or portfolio relative to a benchmark. It is calculated as the difference between the mean return of the asset and the mean return of the benchmark, divided by the standard deviation of the difference between the asset return and the benchmark return, scaled by the square root of 12 (to annualize the metric).
+    Calculates the Information ratio, which measures risk-adjusted excess return
+    relative to a benchmark.
 
     Formula:
-        IR = (mean(Return) - mean(Benchmark_Return)) / (std(Return - Benchmark_Return) * sqrt(12))
+        IR = (Mean(Return) - Mean(Benchmark_Return)) /
+             Std(Return - Benchmark_Return) * sqrt(12)
+
+    Attributes:
+        name (str): Name of the calculator.
+        required_columns (Set[str]): Required columns for calculation.
+
+    Example:
+        ```python
+        calculator = InformationRatioCalculator()
+        result = calculator.calculate(data)
+        ```
     """
 
-    def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
-        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
+    def __init__(self, name: Optional[str] = None) -> None:
+        """Initialize the InformationRatioCalculator.
+
+        Args:
+            name: Optional custom name for the calculator.
+        """
+        super().__init__(required_columns={"Return", "Benchmark_Return"}, name=name)
+
+    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        """Calculate Information ratio for the given data.
+
+        Args:
+            data: LazyFrame containing Return and Benchmark_Return columns.
+
+        Returns:
+            LazyFrame with added Information_Ratio column.
+        """
+        return data.group_by(self.group_by_columns).agg(
             [
                 (
                     (pl.col("Return").mean() - pl.col("Benchmark_Return").mean())
@@ -62,21 +108,50 @@ class InformationRatioCalculator(MetricCalculator):
 
 
 class SortinoRatioCalculator(MetricCalculator):
-    """
-    A calculator for the Sortino Ratio metric.
+    """Calculator for Sortino ratio metric.
 
-    The Sortino Ratio is a measure of risk-adjusted return that focuses on the downside risk of an investment. It is calculated as the difference between the return of an investment and the risk-free rate, divided by the standard deviation of the investment's negative returns. The formula is:
+    Calculates the Sortino ratio, which measures risk-adjusted return using
+    only downside deviation.
 
     Formula:
-        Sortino Ratio = (Mean(Return) - Risk-Free Rate) / Std(Negative_Return) * sqrt(12)
+        Sortino Ratio = (Mean(Return) - Risk_Free_Rate) /
+                       Std(Negative_Returns) * sqrt(12)
+
+    Attributes:
+        name (str): Name of the calculator.
+        required_columns (Set[str]): Required columns for calculation.
+        risk_free_rate (float): Annual risk-free rate.
+
+    Example:
+        ```python
+        calculator = SortinoRatioCalculator(risk_free_rate=0.02)
+        result = calculator.calculate(data)
+        ```
     """
 
-    def __init__(self, risk_free_rate: float = 0.02):
-        self.risk_free_rate = risk_free_rate / 12  # Monthly risk-free rate
+    def __init__(
+        self, risk_free_rate: float = 0.02, name: Optional[str] = None
+    ) -> None:
+        """Initialize the SortinoRatioCalculator.
 
-    def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        Args:
+            risk_free_rate: Annual risk-free rate (default: 2%).
+            name: Optional custom name for the calculator.
+        """
+        super().__init__(required_columns={"Return"}, name=name)
+        self.risk_free_rate = risk_free_rate / 12  # Convert to monthly
+
+    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        """Calculate Sortino ratio for the given data.
+
+        Args:
+            data: LazyFrame containing Return column.
+
+        Returns:
+            LazyFrame with added Sortino_Ratio column.
+        """
         negative_returns = pl.when(pl.col("Return") < 0).then(pl.col("Return"))
-        return data.group_by(["PM_ID", "Strategy_ID"]).agg(
+        return data.group_by(self.group_by_columns).agg(
             [
                 (
                     (pl.col("Return").mean() - self.risk_free_rate)
@@ -88,19 +163,45 @@ class SortinoRatioCalculator(MetricCalculator):
 
 
 class OmegaRatioCalculator(MetricCalculator):
-    """
-    A calculator for the Omega Ratio metric.
+    """Calculator for Omega ratio metric.
 
-    The Omega Ratio is a risk-adjusted performance measure that evaluates the probability-weighted return distribution of an investment. It is calculated as the ratio of the expected gains to the expected losses, where gains are defined as returns above a specified threshold and losses are returns below the threshold.
+    Calculates the Omega ratio, which evaluates the probability-weighted
+    ratio of gains versus losses relative to a threshold.
 
     Formula:
-        Omega Ratio = sum(Gains) / sum(Losses)
+        Omega Ratio = Sum(Gains above threshold) / Sum(Losses below threshold)
+
+    Attributes:
+        name (str): Name of the calculator.
+        required_columns (Set[str]): Required columns for calculation.
+        threshold (float): Return threshold for separating gains and losses.
+
+    Example:
+        ```python
+        calculator = OmegaRatioCalculator(threshold=0.0)
+        result = calculator.calculate(data)
+        ```
     """
 
-    def __init__(self, threshold: float = 0.0):
+    def __init__(self, threshold: float = 0.0, name: Optional[str] = None) -> None:
+        """Initialize the OmegaRatioCalculator.
+
+        Args:
+            threshold: Return threshold for separating gains and losses.
+            name: Optional custom name for the calculator.
+        """
+        super().__init__(required_columns={"Return", "Benchmark_Return"}, name=name)
         self.threshold = threshold
 
-    def calculate(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+        """Calculate Omega ratio for the given data.
+
+        Args:
+            data: LazyFrame containing Return and Benchmark_Return columns.
+
+        Returns:
+            LazyFrame with added Omega_Ratio column.
+        """
         excess_returns = pl.col("Return") - pl.col("Benchmark_Return")
         gains = (
             pl.when(excess_returns > self.threshold)
@@ -112,9 +213,10 @@ class OmegaRatioCalculator(MetricCalculator):
             .then(self.threshold - excess_returns)
             .otherwise(0)
         )
+
         return (
             data.with_columns(gains.alias("Gains"), losses.alias("Losses"))
-            .group_by(["PM_ID", "Strategy_ID"])
+            .group_by(self.group_by_columns)
             .agg(
                 [(pl.col("Gains").sum() / pl.col("Losses").sum()).alias("Omega_Ratio")]
             )

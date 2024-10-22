@@ -1,4 +1,4 @@
-from typing import Dict, Type
+from typing import Dict, List, Type
 
 from .base import MetricCalculator
 from .performance_metrics import BetaCalculator, ExcessReturnCalculator
@@ -8,6 +8,7 @@ from .ratio_metrics import (
     SharpeRatioCalculator,
 )
 from .risk_metrics import TrackingErrorCalculator, VolatilityCalculator
+from loguru import logger
 
 
 class MetricCalculatorFactory:
@@ -51,8 +52,18 @@ class MetricCalculatorFactory:
         """
         calculator_class = cls._calculators.get(calculator_type)
         if calculator_class is None:
+            logger.error(f"Unknown calculator type: {calculator_type}")
             raise ValueError(f"Unknown calculator type: {calculator_type}")
         return calculator_class(**kwargs)
+
+    @classmethod
+    def available_calculators(cls) -> List[str]:
+        """Get list of available calculator types.
+
+        Returns:
+            List of available calculator names.
+        """
+        return list(cls._calculators.keys())
 
     @classmethod
     def create_all_calculators(cls, **kwargs) -> list[MetricCalculator]:
