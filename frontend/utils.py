@@ -8,7 +8,6 @@ from src.data.validator import DataValidator
 from src.metrics.calculator.factory import MetricCalculatorFactory
 from src.metrics.calculator.pipeline import CalculationPipeline
 from src.metrics.portfolio_aggregator.portfolio import PMScoreAggregator
-from src.metrics.scoring_pipeline import ScoringPipeline
 from src.metrics.standardizer.factory import StandardizerFactory
 from src.metrics.strategy_aggregator.strategy import WeightedSumScoreAggregator
 from src.orchestrator import PerformanceAnalysisOrchestrator
@@ -24,7 +23,7 @@ def load_data(source_type: str, file_path: str) -> pl.DataFrame:
 
 
 @st.cache_data
-def run_analysis():
+def run_analysis() -> PerformanceAnalysisOrchestrator:
     # Set up data source
     if st.session_state.data_source == "parquet":
         data_source = ParquetDataSource(st.session_state.file_path)
@@ -63,18 +62,17 @@ def run_analysis():
     )
     strategy_aggregator = WeightedSumScoreAggregator()
     pm_score_aggregator = PMScoreAggregator()
-    scoring_pipeline = ScoringPipeline(
-        standardizer, strategy_aggregator, pm_score_aggregator
-    )
 
     # Set up and run orchestrator
     orchestrator = PerformanceAnalysisOrchestrator(
         data_pipeline=data_pipeline,
         calculation_pipeline=metric_pipeline,
-        scoring_pipeline=scoring_pipeline,
+        standardizer=standardizer,
+        strategy_aggregator=strategy_aggregator,
+        portfolio_aggregator=pm_score_aggregator,
     )
 
-    results = orchestrator.run_analysis(
+    orchestrator.run_analysis(
         st.session_state.selected_metrics, st.session_state.metric_weights
     )
-    return results
+    return orchestrator

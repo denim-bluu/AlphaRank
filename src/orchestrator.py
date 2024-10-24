@@ -3,9 +3,12 @@ from typing import Dict, List
 import polars as pl
 from loguru import logger
 
+from .metrics.portfolio_aggregator.base import PortfolioScoreAggregator
+from .metrics.standardizer.base import MetricStandardizer
+from .metrics.strategy_aggregator.base import StrategyScoreAggregator
+
 from .data.pipeline import DataPipeline
 from .metrics.calculator.pipeline import CalculationPipeline
-from .metrics.scoring_pipeline import ScoringPipeline
 
 logger.add("performance_analysis.log", rotation="500 MB", level="INFO")
 
@@ -17,15 +20,22 @@ class PerformanceAnalysisOrchestrator:
         self,
         data_pipeline: DataPipeline,
         calculation_pipeline: CalculationPipeline,
-        scoring_pipeline: ScoringPipeline,
+        standardizer: MetricStandardizer,
+        strategy_aggregator: StrategyScoreAggregator,
+        portfolio_aggregator: PortfolioScoreAggregator,
     ):
-        self.data_pipeline = data_pipeline
-        self.calculation_pipeline = calculation_pipeline
-        self.scoring_pipeline = scoring_pipeline
+        self._data_pipeline = data_pipeline
+        self._calculation_pipeline = calculation_pipeline
+        self._standardizer = standardizer
+        self._strategy_aggregator = strategy_aggregator
+        self._portfolio_aggregator = portfolio_aggregator
+
+        self.metric_results: pl.LazyFrame | None = None
+        self.scored_results: pl.LazyFrame | None = None
 
     def run_analysis(
         self, metric_columns: List[str], weights: Dict[str, float]
-    ) -> pl.DataFrame:
+    ) -> bool:
         """
         Run the entire performance analysis process.
 
@@ -34,33 +44,55 @@ class PerformanceAnalysisOrchestrator:
             weights (Dict[str, float]): Weights for each metric in the aggregation.
 
         Returns:
-            pl.DataFrame: Final results with calculated metrics, scores, and rankings.
+            bool: True if the analysis was successful, False otherwise.
         """
         try:
             logger.info("Starting performance analysis")
 
             # Process data
             logger.info("Processing raw data")
-            processed_data = self.data_pipeline.run()
+            processed_data = self._data_pipeline.run()
 
             # Calculate metrics
             logger.info("Calculating performance metrics")
-            metric_results = self.calculation_pipeline.run(processed_data)
+            metric_results = self._calculation_pipeline.run(processed_data)
 
-            # Score and rank strategies
-            logger.info("Scoring and ranking strategies")
-            scored_results = self.scoring_pipeline.run(
+            # Standardize metrics
+            logger.info("Standardizing metrics")
+            metric_results = self._standardizer.standardize(
+                metric_results, metric_columns
+            )
+
+            # Aggregate strategy scores
+            logger.info("Aggregating strategy scores")
+            self.metric_results = self._strategy_aggregator.aggregate(
                 metric_results, metric_columns, weights
             )
 
+            # Aggregate portfolio scores
+            logger.info("Aggregating portfolio scores")
+            scored_results = self._portfolio_aggregator.aggregate(self.metric_results)
+
             # Add rankings
-            final_results = scored_results.with_columns(
-                [pl.col("PM_Score").rank(method="dense").alias("Rank")]
-            )
+            self.scored_results = scored_results.with_columns(
+                [pl.col("PM_Score").rank(method="dense", descending=True).alias("Rank")]
+            ).sort("Rank")
 
             logger.success("✅ Performance analysis completed successfully")
-            return final_results.collect()  # Materialize the LazyFrame
+            return True
 
         except Exception as e:
             logger.error(f"An error occurred during performance analysis: {str(e)}")
-            raise
+            raise e
+
+    def get_metric_results(self) -> pl.DataFrame:
+        """Get the calculated metric results."""
+        if self.metric_results is None:
+            raise ValueError("No metric results available. Run analysis first.")
+        return self.metric_results.collect()
+
+    def get_scored_results(self) -> pl.DataFrame:
+        """Get the scored results with rankings."""
+        if self.scored_results is None:
+            raise ValueError("No scored results available. Run analysis first.")
+        return self.scored_results.collect()
