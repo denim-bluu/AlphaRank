@@ -15,13 +15,13 @@ class MetricCalculatorFactory:
     """Factory for creating metric calculators."""
 
     _calculators: Dict[str, Type[MetricCalculator]] = {
-        "excess_return": ExcessReturnCalculator,
-        "beta": BetaCalculator,
-        "volatility": VolatilityCalculator,
-        "tracking_error": TrackingErrorCalculator,
-        "sharpe_ratio": SharpeRatioCalculator,
-        "information_ratio": InformationRatioCalculator,
-        "omega_ratio": OmegaRatioCalculator,
+        "Excess_Return": ExcessReturnCalculator,
+        "Beta": BetaCalculator,
+        "Volatility": VolatilityCalculator,
+        "Tracking_Error": TrackingErrorCalculator,
+        "Sharpe_Ratio": SharpeRatioCalculator,
+        "Information_Ratio": InformationRatioCalculator,
+        "Omega_Ratio": OmegaRatioCalculator,
     }
 
     @classmethod
