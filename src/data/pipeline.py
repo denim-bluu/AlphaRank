@@ -1,6 +1,6 @@
 import polars as pl
 
-from .preprocessor import DataPreprocessor
+from .preprocess.preprocessor import DataPreprocessor
 from .source import DataSource
 from .validator import DataValidator
 

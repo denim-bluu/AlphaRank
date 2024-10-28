@@ -1,11 +1,10 @@
-from typing import Optional
 import numpy as np
 import polars as pl
 
-from .base import MetricCalculator
+from src.calculators.base import MetricCalculator, MetricType
 
 
-class SharpeRatioCalculator(MetricCalculator):
+class SharpeRatio(MetricCalculator):
     """Calculator for Sharpe ratio metric.
 
     Calculates the Sharpe ratio, which measures risk-adjusted return relative
@@ -15,7 +14,6 @@ class SharpeRatioCalculator(MetricCalculator):
         Sharpe Ratio = (Mean(Return) - Risk_Free_Rate) / Std(Return) * sqrt(12)
 
     Attributes:
-        name (str): Name of the calculator.
         required_columns (Set[str]): Required columns for calculation.
         risk_free_rate (float): Annual risk-free rate.
 
@@ -26,19 +24,18 @@ class SharpeRatioCalculator(MetricCalculator):
         ```
     """
 
-    def __init__(
-        self, risk_free_rate: float = 0.02, name: Optional[str] = None
-    ) -> None:
+    type: MetricType = MetricType.POSITIVE
+
+    def __init__(self, risk_free_rate: float = 0.02) -> None:
         """Initialize the SharpeRatioCalculator.
 
         Args:
             risk_free_rate: Annual risk-free rate (default: 2%).
             name: Optional custom name for the calculator.
         """
-        super().__init__(required_columns={"Return"}, name=name)
         self.risk_free_rate = risk_free_rate / 12  # Convert to monthly
 
-    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def expression(self) -> pl.Expr:
         """Calculate Sharpe ratio for the given data.
 
         Args:
@@ -47,18 +44,14 @@ class SharpeRatioCalculator(MetricCalculator):
         Returns:
             LazyFrame with added Sharpe_Ratio column.
         """
-        return data.group_by(self.group_by_columns).agg(
-            [
-                (
-                    (pl.col("Return").mean() - self.risk_free_rate)
-                    / pl.col("Return").std()
-                    * np.sqrt(12)
-                ).alias("Sharpe_Ratio")
-            ]
+        return (
+            (pl.col("Return").mean() - self.risk_free_rate)
+            / pl.col("Return").std()
+            * np.sqrt(12)
         )
 
 
-class InformationRatioCalculator(MetricCalculator):
+class InformationRatio(MetricCalculator):
     """Calculator for Information ratio metric.
 
     Calculates the Information ratio, which measures risk-adjusted excess return
@@ -69,7 +62,6 @@ class InformationRatioCalculator(MetricCalculator):
              Std(Return - Benchmark_Return) * sqrt(12)
 
     Attributes:
-        name (str): Name of the calculator.
         required_columns (Set[str]): Required columns for calculation.
 
     Example:
@@ -79,15 +71,9 @@ class InformationRatioCalculator(MetricCalculator):
         ```
     """
 
-    def __init__(self, name: Optional[str] = None) -> None:
-        """Initialize the InformationRatioCalculator.
+    type: MetricType = MetricType.POSITIVE
 
-        Args:
-            name: Optional custom name for the calculator.
-        """
-        super().__init__(required_columns={"Return", "Benchmark_Return"}, name=name)
-
-    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def expression(self) -> pl.Expr:
         """Calculate Information ratio for the given data.
 
         Args:
@@ -96,18 +82,14 @@ class InformationRatioCalculator(MetricCalculator):
         Returns:
             LazyFrame with added Information_Ratio column.
         """
-        return data.group_by(self.group_by_columns).agg(
-            [
-                (
-                    (pl.col("Return").mean() - pl.col("Benchmark_Return").mean())
-                    / (pl.col("Return") - pl.col("Benchmark_Return")).std()
-                    * np.sqrt(12)
-                ).alias("Information_Ratio")
-            ]
+        return (
+            (pl.col("Return").mean() - pl.col("Benchmark_Return").mean())
+            / (pl.col("Return") - pl.col("Benchmark_Return")).std()
+            * np.sqrt(12)
         )
 
 
-class SortinoRatioCalculator(MetricCalculator):
+class SortinoRatio(MetricCalculator):
     """Calculator for Sortino ratio metric.
 
     Calculates the Sortino ratio, which measures risk-adjusted return using
@@ -118,7 +100,6 @@ class SortinoRatioCalculator(MetricCalculator):
                        Std(Negative_Returns) * sqrt(12)
 
     Attributes:
-        name (str): Name of the calculator.
         required_columns (Set[str]): Required columns for calculation.
         risk_free_rate (float): Annual risk-free rate.
 
@@ -129,19 +110,18 @@ class SortinoRatioCalculator(MetricCalculator):
         ```
     """
 
-    def __init__(
-        self, risk_free_rate: float = 0.02, name: Optional[str] = None
-    ) -> None:
+    type: MetricType = MetricType.POSITIVE
+
+    def __init__(self, risk_free_rate: float = 0.02) -> None:
         """Initialize the SortinoRatioCalculator.
 
         Args:
             risk_free_rate: Annual risk-free rate (default: 2%).
             name: Optional custom name for the calculator.
         """
-        super().__init__(required_columns={"Return"}, name=name)
         self.risk_free_rate = risk_free_rate / 12  # Convert to monthly
 
-    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def expression(self) -> pl.Expr:
         """Calculate Sortino ratio for the given data.
 
         Args:
@@ -151,18 +131,14 @@ class SortinoRatioCalculator(MetricCalculator):
             LazyFrame with added Sortino_Ratio column.
         """
         negative_returns = pl.when(pl.col("Return") < 0).then(pl.col("Return"))
-        return data.group_by(self.group_by_columns).agg(
-            [
-                (
-                    (pl.col("Return").mean() - self.risk_free_rate)
-                    / negative_returns.std()
-                    * np.sqrt(12)
-                ).alias("Sortino_Ratio")
-            ]
+        return (
+            (pl.col("Return").mean() - self.risk_free_rate)
+            / negative_returns.std()
+            * np.sqrt(12)
         )
 
 
-class OmegaRatioCalculator(MetricCalculator):
+class OmegaRatio(MetricCalculator):
     """Calculator for Omega ratio metric.
 
     Calculates the Omega ratio, which evaluates the probability-weighted
@@ -172,7 +148,6 @@ class OmegaRatioCalculator(MetricCalculator):
         Omega Ratio = Sum(Gains above threshold) / Sum(Losses below threshold)
 
     Attributes:
-        name (str): Name of the calculator.
         required_columns (Set[str]): Required columns for calculation.
         threshold (float): Return threshold for separating gains and losses.
 
@@ -183,17 +158,18 @@ class OmegaRatioCalculator(MetricCalculator):
         ```
     """
 
-    def __init__(self, threshold: float = 0.0, name: Optional[str] = None) -> None:
+    type: MetricType = MetricType.POSITIVE
+
+    def __init__(self, threshold: float = 0.0) -> None:
         """Initialize the OmegaRatioCalculator.
 
         Args:
             threshold: Return threshold for separating gains and losses.
             name: Optional custom name for the calculator.
         """
-        super().__init__(required_columns={"Return", "Benchmark_Return"}, name=name)
         self.threshold = threshold
 
-    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def expression(self) -> pl.Expr:
         """Calculate Omega ratio for the given data.
 
         Args:
@@ -202,22 +178,15 @@ class OmegaRatioCalculator(MetricCalculator):
         Returns:
             LazyFrame with added Omega_Ratio column.
         """
-        excess_returns = pl.col("Return") - pl.col("Benchmark_Return")
-        gains = (
-            pl.when(excess_returns > self.threshold)
-            .then(excess_returns - self.threshold)
+        excess_returns_expr = pl.col("Return") - pl.col("Benchmark_Return")
+        gains_expr = (
+            pl.when(excess_returns_expr > self.threshold)
+            .then(excess_returns_expr - self.threshold)
             .otherwise(0)
         )
-        losses = (
-            pl.when(excess_returns <= self.threshold)
-            .then(self.threshold - excess_returns)
+        losses_expr = (
+            pl.when(excess_returns_expr <= self.threshold)
+            .then(self.threshold - excess_returns_expr)
             .otherwise(0)
         )
-
-        return (
-            data.with_columns(gains.alias("Gains"), losses.alias("Losses"))
-            .group_by(self.group_by_columns)
-            .agg(
-                [(pl.col("Gains").sum() / pl.col("Losses").sum()).alias("Omega_Ratio")]
-            )
-        )
+        return gains_expr.sum() / losses_expr.sum()

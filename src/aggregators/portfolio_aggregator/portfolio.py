@@ -9,6 +9,6 @@ class PMScoreAggregator(PortfolioScoreAggregator):
     def aggregate(self, data: pl.LazyFrame) -> pl.LazyFrame:
         return (
             data.group_by("PM_ID")
-            .agg([pl.col("Strategy_Score").mean().alias("PM_Score")])
-            .sort("PM_Score", descending=False)
+            .agg([pl.col("StrategyScore").mean().alias("PMScore")])
+            .sort("PMScore", descending=False)
         )
