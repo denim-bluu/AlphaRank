@@ -1,8 +1,9 @@
 import polars as pl
 import streamlit as st
 
-from src.data import preprocessor as pp
+from src.data.preprocess import steps as pp
 from src.data.pipeline import DataPipeline
+import src.data.preprocess.preprocessor
 from src.data.source import ParquetDataSource
 from src.data.validator import DataValidator
 from src.metrics.calculator.factory import MetricCalculatorFactory
@@ -37,7 +38,7 @@ def run_analysis() -> PerformanceAnalysisOrchestrator:
     preprocessor_steps = [
         getattr(pp, step)() for step in st.session_state.preprocessor_steps
     ]
-    preprocessor = pp.DataPreprocessor(preprocessor_steps)
+    preprocessor = src.data.preprocess.preprocessor.DataPreprocessor(preprocessor_steps)
 
     # Set up data pipeline
     data_pipeline = DataPipeline(data_source, validator, preprocessor)
@@ -45,12 +46,11 @@ def run_analysis() -> PerformanceAnalysisOrchestrator:
     # Set up metric pipeline
     factory = MetricCalculatorFactory()
     calculators = [
-        factory.create_calculator(metric.lower())
-        for metric in st.session_state.selected_metrics
+        factory.create(metric.lower()) for metric in st.session_state.selected_metrics
     ]
     if "sharpe_ratio" in st.session_state.selected_metrics:
         calculators.append(
-            factory.create_calculator(
+            factory.create(
                 "sharpe_ratio", risk_free_rate=st.session_state.risk_free_rate
             )
         )

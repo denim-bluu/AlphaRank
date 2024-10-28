@@ -1,20 +1,6 @@
-from abc import ABC, abstractmethod
-
 import polars as pl
 
-
-class PreprocessingStep(ABC):
-    @abstractmethod
-    def apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
-        """Apply preprocessing step to the LazyFrame.
-
-        Args:
-            lf: Input LazyFrame to process
-
-        Returns:
-            Processed LazyFrame
-        """
-        raise NotImplementedError
+from src.data.preprocess.base import PreprocessingStep
 
 
 class SortStep(PreprocessingStep):
@@ -80,37 +66,16 @@ class RollingStdBenchmarkReturnStep(RollingOperationStep):
         )
 
 
-class PreprocessorStepFactory:
-    _steps: dict[str, type[PreprocessingStep]] = {
-        "OptimizeSchemaStep": OptimizeSchemaStep,
-        "SortStep": SortStep,
-        "RollingMeanReturnStep": RollingMeanReturnStep,
-        "RollingMeanBenchmarkReturnStep": RollingMeanBenchmarkReturnStep,
-        "RollingStdReturnStep": RollingStdReturnStep,
-        "RollingStdBenchmarkReturnStep": RollingStdBenchmarkReturnStep,
-    }
-
-    @classmethod
-    def create_step(cls, name: str) -> PreprocessingStep:
-        step_class = cls._steps.get(name)
-        if step_class is None:
-            raise ValueError(f"Unknown preprocessing step: {name}")
-        return step_class()
-
-    @classmethod
-    def create_all_steps(cls) -> list[PreprocessingStep]:
-        return [cls.create_step(name) for name in cls._steps]
-
-    @classmethod
-    def available_steps(cls) -> list[str]:
-        return list(cls._steps.keys())
-
-
-class DataPreprocessor:
-    def __init__(self, steps: list[PreprocessingStep]):
-        self.steps = steps
-
-    def preprocess(self, lf: pl.LazyFrame) -> pl.LazyFrame:
-        for step in self.steps:
-            lf = step.apply(lf)
-        return lf
+class CumulativeReturnStep(PreprocessingStep):
+    def apply(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        return lf.with_columns(
+            (
+                (1 + pl.col("Return")).cum_prod().over(["PM_ID", "Strategy_ID"]) - 1
+            ).alias("Cumulative_Return"),
+            (
+                (1 + pl.col("Benchmark_Return"))
+                .cum_prod()
+                .over(["PM_ID", "Strategy_ID"])
+                - 1
+            ).alias("Cumulative_Benchmark_Return"),
+        )

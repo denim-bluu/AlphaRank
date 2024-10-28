@@ -1,7 +1,7 @@
 import streamlit as st
 
 from src.config import Configuration
-from src.data.preprocessor import PreprocessorStepFactory
+from src.data.preprocess.factory import PreprocessorStepFactory
 from src.metrics.standardizer.factory import StandardizerFactory
 from src.metrics.calculator.factory import MetricCalculatorFactory
 
@@ -46,7 +46,7 @@ preprocessor_steps = st.multiselect(
 st.header("Metrics Configuration")
 selected_metrics = st.multiselect(
     "Select metrics",
-    options=MetricCalculatorFactory.available_calculators(),
+    options=MetricCalculatorFactory.get_registered_types(),
     default=st.session_state.config["selected_metrics"],
     key="metrics",
 )

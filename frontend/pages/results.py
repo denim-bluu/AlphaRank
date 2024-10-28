@@ -15,7 +15,7 @@ def render():
 
         st.subheader("Portfolio Manager Rankings")
         st.dataframe(scored_results)
-        
+
         st.subheader("Metric Results")
         st.dataframe(metric_results)
 

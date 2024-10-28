@@ -44,7 +44,15 @@ if st.button("Run Analysis", type="primary"):
             )
 
             st.session_state.scored_results = orchestrator.get_scored_results()
+            st.session_state.metric_results = orchestrator.get_metric_results()
+
+            # Display results
+            st.header("Results")
+            st.subheader("Portfolio Manager Rankings")
             st.dataframe(st.session_state.scored_results)
+
+            st.subheader("Metric Results")
+            st.dataframe(st.session_state.metric_results)
 
         except Exception as e:
             logger.exception("Error during analysis")

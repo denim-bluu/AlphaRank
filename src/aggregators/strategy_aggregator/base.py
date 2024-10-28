@@ -94,24 +94,29 @@ class StrategyScoreAggregator(ABC):
             raise ValueError(f"Missing columns in data: {missing_cols}")
 
     @abstractmethod
-    def _aggregate(
-        self, data: pl.LazyFrame, metric_columns: List[str], weights: Dict[str, float]
-    ) -> pl.LazyFrame:
-        """Abstract method to implement the specific aggregation strategy.
+    def expr(self, metric_columns: List[str], weights: Dict[str, float]) -> pl.Expr:
+        """Create a Polars expression to aggregate metrics using the strategy.
 
-        This method must be implemented by concrete subclasses to define
-        how metrics should be aggregated.
+        This method should be implemented by concrete subclasses to define the
+        aggregation logic for the specific strategy.
 
         Args:
-            data: LazyFrame containing the data to aggregate.
-            metric_columns: List of column names to include in aggregation.
-            weights: Dictionary mapping metric names to their weights in the aggregation.
+            metric_columns: List of column names to include in the aggregation.
+            weights: Dictionary mapping metric names to their weights.
 
         Returns:
-            LazyFrame with aggregated results added.
+            Polars expression for the aggregation.
 
-        Raises:
-            NotImplementedError: If the concrete class doesn't implement this method.
+        Example:
+            ```python
+            def expr(self, metric_columns, weights):
+                weighted_sum_expr = sum(
+                    pl.col(col).mul(weights.get(col, 0.0)) for col in metric_columns
+                )
+                if not isinstance(weighted_sum_expr, pl.Expr):
+                    weighted_sum_expr = pl.lit(weighted_sum_expr)
+                return weighted_sum_expr
+            ```
         """
         raise NotImplementedError
 
@@ -146,7 +151,9 @@ class StrategyScoreAggregator(ABC):
         self._validate_input(data, metric_columns)
         self._check_weights(weights, metric_columns)
 
-        result = self._aggregate(data, metric_columns, weights)
+        result = data.with_columns(
+            self.expr(metric_columns, weights).alias("StrategyScore")
+        )
 
         logger.debug(f"Completed aggregation with strategy: {self.name}")
         return result

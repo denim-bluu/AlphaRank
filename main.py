@@ -1,6 +1,8 @@
-from src.config import Configuration, instantiate_orchestrator
+from src.config import Configuration
+from src.pipeline import MainPipeline
 
 config = Configuration()
 
-orchestrator = instantiate_orchestrator(config)
-orchestrator.run_analysis(config.selected_metrics, config.metric_weights)
+pipeline = MainPipeline(config)
+pm_scores = pipeline.run()
+print(pm_scores.collect())

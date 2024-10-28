@@ -7,13 +7,9 @@ class PerformanceRecord(BaseModel):
     Strategy_ID: str
     Benchmark_ID: str
     Date: str
-    Region: str
     Return: float
     Benchmark_Return: float
     Excess_Return: float
-    AUM: float
-    Cumulative_Return: float
-    Cumulative_Benchmark_Return: float
 
     @field_validator("PM_ID")
     def validate_pm_id(cls, v):
@@ -27,22 +23,10 @@ class PerformanceRecord(BaseModel):
             raise ValueError('Strategy_ID must start with "S_"')
         return v
 
-    @field_validator(
-        "Return",
-        "Benchmark_Return",
-        "Excess_Return",
-        "Cumulative_Return",
-        "Cumulative_Benchmark_Return",
-    )
+    @field_validator("Return", "Benchmark_Return", "Excess_Return")
     def validate_returns(cls, v):
         if v < -1:
             raise ValueError("Return values cannot be less than -100%")
-        return v
-
-    @field_validator("AUM")
-    def validate_aum(cls, v):
-        if v <= 0:
-            raise ValueError("AUM must be positive")
         return v
 
 
@@ -54,7 +38,4 @@ class DataValidator:
             & (pl.col("Return") >= -1)
             & (pl.col("Benchmark_Return") >= -1)
             & (pl.col("Excess_Return") >= -1)
-            & (pl.col("Cumulative_Return") >= -1)
-            & (pl.col("Cumulative_Benchmark_Return") >= -1)
-            & (pl.col("AUM") > 0)
         )

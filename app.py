@@ -8,9 +8,7 @@ st.set_page_config(
 config_page = st.Page(
     "frontend/pages/config.py", title="Config", icon=":material/login:"
 )
-analysis_page = st.Page(
-    "frontend/pages/analysis.py", title="Analysis", icon="🔬"
-)
+analysis_page = st.Page("frontend/pages/analysis.py", title="Analysis", icon="🔬")
 
 pg = st.navigation(
     {

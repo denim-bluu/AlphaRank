@@ -1,7 +1,8 @@
 import polars as pl
 
-from src.data import preprocessor as pp
+from src.data.preprocess import steps as pp
 from src.data.pipeline import DataPipeline
+import src.data.preprocess.preprocessor
 from src.data.source import DataSource
 from src.data.validator import DataValidator
 
@@ -24,7 +25,7 @@ def test_data_pipeline(sample_data):
         pp.RollingStdReturnStep(),
         pp.RollingStdBenchmarkReturnStep(),
     ]
-    preprocessor = pp.DataPreprocessor(steps)
+    preprocessor = src.data.preprocess.preprocessor.DataPreprocessor(steps)
 
     pipeline = DataPipeline(mock_source, validator, preprocessor)
     result = pipeline.run()

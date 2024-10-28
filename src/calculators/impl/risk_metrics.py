@@ -1,11 +1,10 @@
 import numpy as np
 import polars as pl
-from typing import Optional
 
-from .base import MetricCalculator
+from src.calculators.base import MetricCalculator, MetricType
 
 
-class VolatilityCalculator(MetricCalculator):
+class Volatility(MetricCalculator):
     """Calculator for return volatility metric.
 
     Calculates the volatility (standard deviation) of returns for different strategies.
@@ -13,7 +12,6 @@ class VolatilityCalculator(MetricCalculator):
     security or market index.
 
     Attributes:
-        name (str): Name of the calculator.
         required_columns (Set[str]): Required columns for calculation.
         annualize (bool): Whether to annualize the volatility (multiply by sqrt(12)).
 
@@ -24,17 +22,18 @@ class VolatilityCalculator(MetricCalculator):
         ```
     """
 
-    def __init__(self, annualize: bool = True, name: Optional[str] = None) -> None:
+    type: MetricType = MetricType.NEGATIVE
+
+    def __init__(self, annualize: bool = True) -> None:
         """Initialize the VolatilityCalculator.
 
         Args:
             annualize: Whether to annualize the volatility.
             name: Optional custom name for the calculator.
         """
-        super().__init__(required_columns={"Return"}, name=name)
         self.annualize = annualize
 
-    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def expression(self) -> pl.Expr:
         """Calculate volatility for the given data.
 
         Args:
@@ -47,12 +46,10 @@ class VolatilityCalculator(MetricCalculator):
         if self.annualize:
             volatility = volatility * np.sqrt(12)
 
-        return data.group_by(self.group_by_columns).agg(
-            [volatility.alias("Volatility")]
-        )
+        return volatility
 
 
-class TrackingErrorCalculator(MetricCalculator):
+class TrackingError(MetricCalculator):
     """Calculator for tracking error metric.
 
     Calculates the tracking error, which measures how closely a portfolio follows
@@ -63,7 +60,6 @@ class TrackingErrorCalculator(MetricCalculator):
         Tracking Error = sqrt(12) * std(Return - Benchmark_Return)
 
     Attributes:
-        name (str): Name of the calculator.
         required_columns (Set[str]): Required columns for calculation.
         annualize (bool): Whether to annualize the tracking error.
 
@@ -74,17 +70,18 @@ class TrackingErrorCalculator(MetricCalculator):
         ```
     """
 
-    def __init__(self, annualize: bool = True, name: Optional[str] = None) -> None:
+    type: MetricType = MetricType.NEGATIVE
+
+    def __init__(self, annualize: bool = True) -> None:
         """Initialize the TrackingErrorCalculator.
 
         Args:
             annualize: Whether to annualize the tracking error.
             name: Optional custom name for the calculator.
         """
-        super().__init__(required_columns={"Return", "Benchmark_Return"}, name=name)
         self.annualize = annualize
 
-    def _calculate_metric(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def expression(self) -> pl.Expr:
         """Calculate tracking error for the given data.
 
         Args:
@@ -97,6 +94,4 @@ class TrackingErrorCalculator(MetricCalculator):
         if self.annualize:
             tracking_error = tracking_error * np.sqrt(12)
 
-        return data.group_by(self.group_by_columns).agg(
-            [tracking_error.alias("Tracking_Error")]
-        )
+        return tracking_error
