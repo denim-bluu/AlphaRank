@@ -3,13 +3,13 @@ from typing import Dict, Type
 from src.generics.factory import GenericFactory
 
 from .base import MetricCalculator
-from .return_metrics import Beta, ExcessReturn
-from .risk_adjusted_return_metrics import (
+from .impl.return_metrics import Beta, ExcessReturn
+from .impl.risk_adjusted_return_metrics import (
     InformationRatio,
     OmegaRatio,
     SharpeRatio,
 )
-from .risk_metrics import TrackingError, Volatility
+from .impl.risk_metrics import TrackingError, Volatility
 
 
 class MetricCalculatorFactory(GenericFactory[MetricCalculator]):

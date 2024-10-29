@@ -1,34 +1,32 @@
 import plotly.express as px
 import streamlit as st
 
-from src.orchestrator import PerformanceAnalysisOrchestrator
+from src.pipeline import ModelPipeline
 
 
-def render():
-    st.header("Results")
+st.header("Results")
 
-    if st.session_state.results is not None:
-        results: PerformanceAnalysisOrchestrator = st.session_state.results
+if st.session_state.model_pipeline is None:
+    st.stop()
+model_pipeline: ModelPipeline = st.session_state.model_pipeline
 
-        scored_results = results.get_scored_results().sort("Rank")
-        metric_results = results.get_metric_results()
+scored_results = model_pipeline.pm_scores.sort("PMScore").collect()
+metric_results = model_pipeline.metric_data.collect()
 
-        st.subheader("Portfolio Manager Rankings")
-        st.dataframe(scored_results)
+st.subheader("Portfolio Manager Rankings")
+st.dataframe(scored_results)
 
-        st.subheader("Metric Results")
-        st.dataframe(metric_results)
+st.subheader("Metric Results")
+st.dataframe(metric_results)
 
-        st.subheader("Performance Metrics")
-        for metric in st.session_state.selected_metrics:
-            fig = px.bar(
-                metric_results, x="Strategy_ID", y=metric, title=f"{metric} by Strategy"
-            )
-            st.plotly_chart(fig)
+st.subheader("Performance Metrics")
+for metric in st.session_state.model_pipeline._metric_columns:
+    fig = px.bar(
+        metric_results, x="Strategy_ID", y=metric, title=f"{metric} by Strategy"
+    )
+    st.plotly_chart(fig)
 
-        st.subheader("Correlation Matrix")
-        corr_matrix = metric_results[st.session_state.selected_metrics].corr()
-        fig = px.imshow(corr_matrix, title="Metric Correlation Matrix")
-        st.plotly_chart(fig)
-    else:
-        st.info("No results to display. Please run the analysis first.")
+st.subheader("Correlation Matrix")
+corr_matrix = metric_results[st.session_state.model_pipeline._metric_columns].corr()
+fig = px.imshow(corr_matrix, title="Metric Correlation Matrix")
+st.plotly_chart(fig)

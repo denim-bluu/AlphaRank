@@ -1,15 +1,18 @@
 import streamlit as st
 
-from src.config import Configuration
+from src.config import DataConfig, ModelConfig
 from src.data.preprocess.factory import PreprocessorStepFactory
-from src.metrics.standardizer.factory import StandardizerFactory
-from src.metrics.calculator.factory import MetricCalculatorFactory
+from src.standardizers.factory import StandardizerFactory
+from src.calculators.factory import MetricCalculatorFactory
+from src.weightings.factory import WeightingMethodFactory
 
 
 def initialize_session_state():
     """Initialize session state variables if they don't exist."""
-    if "config" not in st.session_state:
-        st.session_state.config = Configuration().model_dump()
+    if "data_config" not in st.session_state:
+        st.session_state.data_config = DataConfig().model_dump()
+    if "model_config" not in st.session_state:
+        st.session_state.model_config = ModelConfig().model_dump()
 
 
 # Initialize session state
@@ -29,7 +32,7 @@ data_source = st.selectbox(
 data_file_path = st.text_input(
     "Enter Data file path",
     key="data_file_path",
-    value=st.session_state.config["data_file_path"],
+    value=st.session_state.data_config["data_file_path"],
 )
 
 
@@ -37,8 +40,8 @@ data_file_path = st.text_input(
 st.header("Data Processing")
 preprocessor_steps = st.multiselect(
     "Select preprocessor steps",
-    options=list(PreprocessorStepFactory._steps.keys()),
-    default=st.session_state.config["preprocessor_steps"],
+    options=list(PreprocessorStepFactory._registry.keys()),
+    default=st.session_state.data_config["preprocessor_steps"],
     key="preprocessor_steps",
 )
 
@@ -47,42 +50,26 @@ st.header("Metrics Configuration")
 selected_metrics = st.multiselect(
     "Select metrics",
     options=MetricCalculatorFactory.get_registered_types(),
-    default=st.session_state.config["selected_metrics"],
+    default=st.session_state.model_config["selected_metrics"],
     key="metrics",
 )
 
-# Weights Section
-if selected_metrics:
-    with st.expander("Metric Weights"):
-        metric_weights = {}
-        for metric in selected_metrics:
-            weight = st.slider(
-                f"Weight for {metric}",
-                0.0,
-                1.0,
-                value=st.session_state.config["metric_weights"].get(
-                    metric, 1.0 / len(selected_metrics)
-                ),
-                key=f"weight_{metric}",
-            )
-            metric_weights[metric] = weight
-        st.info(f"Total weight: {100*sum(metric_weights.values())}%")
+# Weighting Method Section
+st.header("Weighting Method")
+weighting_method = st.selectbox(
+    "Select weighting method",
+    options=WeightingMethodFactory.get_registered_types(),
+    key="weighting_method",
+)
 
 # Standardization Section
 st.header("Standardization")
 standardizer = st.selectbox(
     "Select standardizer",
-    options=StandardizerFactory.available_standardizers(),
+    options=StandardizerFactory.get_registered_types(),
     key="standardizer",
 )
 
-risk_free_rate = st.number_input(
-    "Risk-free rate",
-    value=st.session_state.config["risk_free_rate"],
-    step=0.001,
-    format="%.3f",
-    key="risk_free_rate",
-)
 
 # Save Configuration
 if st.button("Save Configuration"):
@@ -90,16 +77,19 @@ if st.button("Save Configuration"):
         st.error("Please enter a valid data file path.")
         raise ValueError("Invalid data file path")
 
-    st.session_state.config = Configuration(
+    st.session_state.data_config = DataConfig(
         data_source=data_source,
         data_file_path=data_file_path,
         preprocessor_steps=preprocessor_steps,
+    ).model_dump()
+    st.session_state.model_config = ModelConfig(
         selected_metrics=selected_metrics,
-        metric_weights=metric_weights,
+        weighting_method=weighting_method,
         standardizer=standardizer,
-        risk_free_rate=risk_free_rate,
     ).model_dump()
     st.success("Configuration saved successfully!")
 
-    with st.expander("Current Configuration"):
-        st.json(st.session_state.config)
+    with st.expander("Current Data Configuration"):
+        st.json(st.session_state.data_config)
+    with st.expander("Current Model Configuration"):
+        st.json(st.session_state.model_config)
