@@ -14,7 +14,7 @@ from src.weightings.factory import WeightingMethodFactory
 logger.add("performance_analysis.log", rotation="500 MB", level="INFO")
 
 
-class Configuration(BaseModel):
+class DataConfig(BaseModel):
     data_source: str = Field(
         default="parquet",
         description="Type of data source to use for the analysis.",
@@ -30,18 +30,6 @@ class Configuration(BaseModel):
     preprocessor_steps: list[str] = Field(
         default=PreprocessorStepFactory.get_registered_types(),
         description="List of preprocessor steps to apply to the data.",
-    )
-    selected_metrics: list[str] = Field(
-        default=MetricCalculatorFactory.get_registered_types(),
-        description="List of metrics to calculate.",
-    )
-    standardizer: str = Field(
-        default="MinMax",
-        description="Type of standardizer to use for the metrics.",
-    )
-    weighting_method: str = Field(
-        default="EntropyWeighting",
-        description="Weights for each metric in the scoring.",
     )
 
     @field_validator("data_source")
@@ -63,6 +51,21 @@ class Configuration(BaseModel):
         if set(v) - set(PreprocessorStepFactory._registry.keys()):
             raise ValueError("Invalid preprocessor step.")
         return v
+
+
+class ModelConfig(BaseModel):
+    selected_metrics: list[str] = Field(
+        default=MetricCalculatorFactory.get_registered_types(),
+        description="List of metrics to calculate.",
+    )
+    standardizer: str = Field(
+        default="MinMax",
+        description="Type of standardizer to use for the metrics.",
+    )
+    weighting_method: str = Field(
+        default="EntropyWeighting",
+        description="Weights for each metric in the scoring.",
+    )
 
     @field_validator("selected_metrics")
     def check_selected_metrics(cls, v):
