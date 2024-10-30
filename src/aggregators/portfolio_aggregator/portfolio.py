@@ -1,14 +1,15 @@
-import polars as pl
-
 from .base import PortfolioScoreAggregator
+
+import pandas as pd
 
 
 class PMScoreAggregator(PortfolioScoreAggregator):
     """Aggregator that uses a weighted sum of metrics."""
 
-    def aggregate(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def aggregate(self, data: pd.DataFrame) -> pd.DataFrame:
         return (
-            data.group_by("PM_ID")
-            .agg([pl.col("StrategyScore").mean().alias("PMScore")])
-            .sort("PMScore", descending=False)
+            data.groupby("PM_ID")
+            .agg({"StrategyScore": "mean"})
+            .sort_values("StrategyScore", ascending=True)
+            .rename(columns={"StrategyScore": "PMScore"})
         )

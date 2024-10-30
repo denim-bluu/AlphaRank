@@ -1,13 +1,13 @@
 from typing import Dict, Optional
 from loguru import logger
 from .config import ModelConfig
-from .calculators.pipeline import CalculationPipeline
-from .calculators.factory import MetricCalculatorFactory
+from .metrics.pipeline import CalculationPipeline
+from .metrics.factory import MetricCalculatorFactory
 from .aggregators.portfolio_aggregator.portfolio import PMScoreAggregator
 from .standardizers.factory import StandardizerFactory
 from .aggregators.strategy_aggregator.strategy import WeightedSumScoreAggregator
 from .weightings.factory import WeightingMethodFactory
-import polars as pl
+import pandas as pd
 
 
 class ModelPipeline:
@@ -15,11 +15,11 @@ class ModelPipeline:
     ModelPipeline orchestrates the entire data processing and calculation workflow.
 
     Attributes:
-        metric_data (pl.LazyFrame): Container for metric data.
-        standardized_data (pl.LazyFrame): Container for standardized data.
+        metric_data (pd.DataFrame): Container for metric data.
+        standardized_data (pd.DataFrame): Container for standardized data.
         weights (Dict[str, float]): Dictionary of weights for metrics.
-        strategy_scores (pl.LazyFrame): Container for strategy scores.
-        pm_scores (pl.LazyFrame): Container for PM scores.
+        strategy_scores (pd.DataFrame): Container for strategy scores.
+        pm_scores (pd.DataFrame): Container for PM scores.
     """
 
     def __init__(self, config: ModelConfig):
@@ -43,20 +43,20 @@ class ModelPipeline:
         self._pm_score_aggregator = PMScoreAggregator()
 
         # Data containers
-        self.metric_data: pl.LazyFrame
-        self.standardized_data: pl.LazyFrame
+        self.metric_data: pd.DataFrame
+        self.standardized_data: pd.DataFrame
         self.weights: Dict[str, float]
-        self.strategy_scores: pl.LazyFrame
-        self.pm_scores: pl.LazyFrame
+        self.strategy_scores: pd.DataFrame
+        self.pm_scores: pd.DataFrame
 
     def run(
-        self, data: pl.LazyFrame, manual_weights: Optional[Dict[str, float]] = None
+        self, data: pd.DataFrame, manual_weights: Optional[Dict[str, float]] = None
     ) -> None:
         """
         Run the entire pipeline and return the final PM score.
 
         Args:
-            data (pl.LazyFrame): Input data to process.
+            data (pd.DataFrame): Input data to process.
             manual_weights (Optional[Dict[str, float]]): Manually set weights for metrics.
         """
         self.metric_data = self._calculate_metrics(data)
@@ -67,30 +67,30 @@ class ModelPipeline:
         )
         self.pm_scores = self._aggregate_pm_scores(self.strategy_scores)
 
-    def _calculate_metrics(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def _calculate_metrics(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Calculate metrics from the input data.
 
         Args:
-            data (pl.LazyFrame): Input data to process.
+            data (pd.DataFrame): Input data to process.
 
         Returns:
-            pl.LazyFrame: Calculated metric data.
+            pd.DataFrame: Calculated metric data.
         """
         logger.info("Starting metric calculation pipeline...")
         metric_data = self._calculation_pipeline.run(data)
         logger.info("Metric calculation pipeline completed.")
         return metric_data
 
-    def _standardize_metrics(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def _standardize_metrics(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Standardize the calculated metrics.
 
         Args:
-            data (pl.LazyFrame): Calculated metric data.
+            data (pd.DataFrame): Calculated metric data.
 
         Returns:
-            pl.LazyFrame: Standardized metric data.
+            pd.DataFrame: Standardized metric data.
         """
         logger.info("Starting standardization...")
         standardized_data = self._standardizer.standardize(data, self._metric_types)
@@ -98,13 +98,13 @@ class ModelPipeline:
         return standardized_data
 
     def _calculate_weights(
-        self, data: pl.LazyFrame, manual_weights: Optional[Dict[str, float]]
+        self, data: pd.DataFrame, manual_weights: Optional[Dict[str, float]]
     ) -> Dict[str, float]:
         """
         Calculate weights for the standardized metrics, or use manually set weights if provided.
 
         Args:
-            data (pl.LazyFrame): Standardized metric data.
+            data (pd.DataFrame): Standardized metric data.
             manual_weights (Optional[Dict[str, float]]): Manually set weights for metrics.
 
         Returns:
@@ -120,17 +120,17 @@ class ModelPipeline:
         return weights
 
     def _aggregate_strategy_scores(
-        self, data: pl.LazyFrame, weights: Dict[str, float]
-    ) -> pl.LazyFrame:
+        self, data: pd.DataFrame, weights: Dict[str, float]
+    ) -> pd.DataFrame:
         """
         Aggregate strategy scores using the calculated weights.
 
         Args:
-            data (pl.LazyFrame): Standardized metric data.
+            data (pd.DataFrame): Standardized metric data.
             weights (Dict[str, float]): Dictionary of weights for metrics.
 
         Returns:
-            pl.LazyFrame: Aggregated strategy scores.
+            pd.DataFrame: Aggregated strategy scores.
         """
         logger.info("Aggregating strategy scores...")
         strategy_scores = self._score_aggregator.aggregate(
@@ -141,15 +141,15 @@ class ModelPipeline:
         logger.info("Strategy scores aggregation completed.")
         return strategy_scores
 
-    def _aggregate_pm_scores(self, data: pl.LazyFrame) -> pl.LazyFrame:
+    def _aggregate_pm_scores(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Aggregate PM scores from the strategy scores.
 
         Args:
-            data (pl.LazyFrame): Aggregated strategy scores.
+            data (pd.DataFrame): Aggregated strategy scores.
 
         Returns:
-            pl.LazyFrame: Aggregated PM scores.
+            pd.DataFrame: Aggregated PM scores.
         """
         logger.info("Aggregating PM scores...")
         pm_scores = self._pm_score_aggregator.aggregate(data=data)

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import numpy as np
-import polars as pl
+import pandas as pd
 import pytest
 
 NUM_YEARS = 5
@@ -10,13 +10,11 @@ NUM_STRATEGIES_PER_PM = 3
 
 
 @pytest.fixture
-def sample_data() -> pl.LazyFrame:
+def sample_data() -> pd.DataFrame:
     """Fixture to create a sample dataset for testing."""
-    # Generate date range
-
     start_date = datetime(2018, 1, 1).date()
     end_date = start_date + timedelta(days=365 * NUM_YEARS)
-    dates = pl.date_range(start_date, end_date, interval="1mo", eager=True)
+    dates = pd.date_range(start_date, end_date, freq="ME")
     # Define regions and benchmarks
     regions = ["North America", "Europe", "Asia", "Emerging Markets"]
     benchmarks = {
@@ -53,15 +51,15 @@ def sample_data() -> pl.LazyFrame:
                     }
                 )
 
-    df = pl.DataFrame(data)
-    df = df.sort(["PM_ID", "Strategy_ID", "Date"])
-    df = df.with_columns(
-        ((1 + pl.col("Return")).cum_prod().over(["PM_ID", "Strategy_ID"]) - 1).alias(
-            "Cumulative_Return"
-        ),
-        (
-            (1 + pl.col("Benchmark_Return")).cum_prod().over(["PM_ID", "Strategy_ID"])
-            - 1
-        ).alias("Cumulative_Benchmark_Return"),
+    df = pd.DataFrame(data)
+    df = df.sort_values(by=["PM_ID", "Strategy_ID", "Date"])
+    cumulative_return = df.groupby(["PM_ID", "Strategy_ID"], observed=False)[
+        "Return"
+    ].apply(lambda x: (1 + x).cumprod() - 1)
+    cumulative_benchmark_return = df.groupby(["PM_ID", "Strategy_ID"], observed=False)[
+        "Benchmark_Return"
+    ].apply(lambda x: (1 + x).cumprod() - 1)
+    return df.assign(
+        Cumulative_Return=cumulative_return.values,
+        Cumulative_Benchmark_Return=cumulative_benchmark_return.values,
     )
-    return df.lazy()

@@ -3,7 +3,7 @@ import streamlit as st
 from src.config import DataConfig, ModelConfig
 from src.data.preprocess.factory import PreprocessorStepFactory
 from src.standardizers.factory import StandardizerFactory
-from src.calculators.factory import MetricCalculatorFactory
+from src.metrics.factory import MetricCalculatorFactory
 from src.weightings.factory import WeightingMethodFactory
 
 

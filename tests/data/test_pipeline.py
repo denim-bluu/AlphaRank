@@ -1,5 +1,4 @@
-import polars as pl
-
+import pandas as pd
 from src.data.preprocess import steps as pp
 from src.data.pipeline import DataPipeline
 import src.data.preprocess.preprocessor
@@ -29,8 +28,8 @@ def test_data_pipeline(sample_data):
 
     pipeline = DataPipeline(mock_source, validator, preprocessor)
     result = pipeline.run()
-    columns = result.collect_schema()
-    assert isinstance(result, pl.LazyFrame)
+    columns = result.columns
+    assert isinstance(result, pd.DataFrame)
     assert "Strategy_ID" in columns
     assert "Date" in columns
     assert "Return" in columns

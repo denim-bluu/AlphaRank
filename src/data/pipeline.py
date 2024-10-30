@@ -1,4 +1,4 @@
-import polars as pl
+import pandas as pd
 
 from .preprocess.preprocessor import DataPreprocessor
 from .source import DataSource
@@ -16,7 +16,7 @@ class DataPipeline:
         self.validator = validator
         self.preprocessor = preprocessor
 
-    def run(self) -> pl.LazyFrame:
+    def run(self) -> pd.DataFrame:
         data = self.data_source.fetch_data()
         data = self.validator.validate(data)
         data = self.preprocessor.preprocess(data)

@@ -19,4 +19,4 @@ data = data_pipeline.run()
 
 model_pipeline = ModelPipeline(model_config)
 model_pipeline.run(data)
-print(model_pipeline.pm_scores.collect())
+print(model_pipeline.pm_scores)

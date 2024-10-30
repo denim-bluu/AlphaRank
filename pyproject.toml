@@ -19,6 +19,8 @@ dependencies = [
 
 [tool.uv]
 dev-dependencies = [
+    "ipykernel>=6.29.5",
+    "ipython>=8.29.0",
     "mypy>=1.12.1",
     "pre-commit>=4.0.1",
     "ptpython>=3.0.29",

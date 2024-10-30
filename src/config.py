@@ -2,7 +2,7 @@ from pydantic import BaseModel, field_validator, Field
 
 from src.data.preprocess.factory import PreprocessorStepFactory
 
-from src.calculators.factory import MetricCalculatorFactory
+from src.metrics.factory import MetricCalculatorFactory
 
 from loguru import logger
 from pathlib import Path
