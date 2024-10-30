@@ -1,4 +1,4 @@
-import polars as pl
+import pandas as pd
 from pydantic import BaseModel, field_validator
 
 
@@ -31,11 +31,12 @@ class PerformanceRecord(BaseModel):
 
 
 class DataValidator:
-    def validate(self, lf: pl.LazyFrame) -> pl.LazyFrame:
-        return lf.filter(
-            (pl.col("PM_ID").str.contains(r"^PM_"))
-            & (pl.col("Strategy_ID").str.contains(r"^S_"))
-            & (pl.col("Return") >= -1)
-            & (pl.col("Benchmark_Return") >= -1)
-            & (pl.col("Excess_Return") >= -1)
-        )
+    def validate(self, df: pd.DataFrame) -> pd.DataFrame:
+        # Pandas version
+        return df[
+            df["PM_ID"].str.contains(r"^PM_")
+            & df["Strategy_ID"].str.contains(r"^S_")
+            & (df["Return"] >= -1)
+            & (df["Benchmark_Return"] >= -1)
+            & (df["Excess_Return"] >= -1)
+        ]

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
-import polars as pl
+import pandas as pd
 
 
 class WeightingMethod(ABC):
@@ -8,7 +8,7 @@ class WeightingMethod(ABC):
 
     @abstractmethod
     def calculate_weights(
-        self, metric_data: pl.LazyFrame, metric_columns: List[str]
+        self, metric_data: pd.DataFrame, metric_columns: List[str]
     ) -> Dict[str, float]:
         """Calculate weights for metrics"""
         pass

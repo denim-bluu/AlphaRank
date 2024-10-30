@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict
-import polars as pl
 
-from src.calculators.base import MetricType
+import pandas as pd
+from src.metrics.base import MetricType
 
 
 class MetricStandardizer(ABC):
@@ -10,7 +10,7 @@ class MetricStandardizer(ABC):
 
     @abstractmethod
     def standardize(
-        self, data: pl.LazyFrame, metric_types: Dict[str, MetricType]
-    ) -> pl.LazyFrame:
+        self, data: pd.DataFrame, metric_types: Dict[str, MetricType]
+    ) -> pd.DataFrame:
         """Standardize the given data based on the metric types."""
         pass

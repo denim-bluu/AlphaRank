@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
-import polars as pl
 from loguru import logger
+import pandas as pd
 
 
 class StrategyScoreAggregator(ABC):
@@ -75,7 +75,7 @@ class StrategyScoreAggregator(ABC):
             logger.error("All weights must be positive")
             raise ValueError("All weights must be positive")
 
-    def _validate_input(self, data: pl.LazyFrame, metric_columns: List[str]) -> None:
+    def _validate_input(self, data: pd.DataFrame, metric_columns: List[str]) -> None:
         """Validate input data and required metric columns.
 
         Checks if all required metric columns exist in the input DataFrame.
@@ -87,42 +87,21 @@ class StrategyScoreAggregator(ABC):
         Raises:
             ValueError: If any required columns are missing from the input data.
         """
-        schema = data.collect_schema()
-        missing_cols = [col for col in metric_columns if col not in schema]
+        missing_cols = [col for col in metric_columns if col not in data.columns]
         if missing_cols:
             logger.error(f"Missing columns in data: {missing_cols}")
             raise ValueError(f"Missing columns in data: {missing_cols}")
 
     @abstractmethod
-    def expr(self, metric_columns: List[str], weights: Dict[str, float]) -> pl.Expr:
-        """Create a Polars expression to aggregate metrics using the strategy.
-
-        This method should be implemented by concrete subclasses to define the
-        aggregation logic for the specific strategy.
-
-        Args:
-            metric_columns: List of column names to include in the aggregation.
-            weights: Dictionary mapping metric names to their weights.
-
-        Returns:
-            Polars expression for the aggregation.
-
-        Example:
-            ```python
-            def expr(self, metric_columns, weights):
-                weighted_sum_expr = sum(
-                    pl.col(col).mul(weights.get(col, 0.0)) for col in metric_columns
-                )
-                if not isinstance(weighted_sum_expr, pl.Expr):
-                    weighted_sum_expr = pl.lit(weighted_sum_expr)
-                return weighted_sum_expr
-            ```
-        """
+    def _aggregate(
+        self, metric_data: pd.DataFrame, weights: Dict[str, float]
+    ) -> pd.DataFrame:
+        """Perform the aggregation using the specific strategy."""
         raise NotImplementedError
 
     def aggregate(
-        self, data: pl.LazyFrame, metric_columns: List[str], weights: Dict[str, float]
-    ) -> pl.LazyFrame:
+        self, data: pd.DataFrame, metric_columns: List[str], weights: Dict[str, float]
+    ) -> pd.DataFrame:
         """Aggregate multiple metrics into a single score using the defined strategy.
 
         This is the main public interface for the aggregator. It performs validation
@@ -151,9 +130,7 @@ class StrategyScoreAggregator(ABC):
         self._validate_input(data, metric_columns)
         self._check_weights(weights, metric_columns)
 
-        result = data.with_columns(
-            self.expr(metric_columns, weights).alias("StrategyScore")
-        )
+        result = self._aggregate(data, weights)
 
         logger.debug(f"Completed aggregation with strategy: {self.name}")
         return result

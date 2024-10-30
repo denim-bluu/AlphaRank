@@ -1,12 +1,11 @@
 from typing import Dict, List
 from src.weightings.base import WeightingMethod
-
-import polars as pl
+import pandas as pd
 
 
 class EqualWeighting(WeightingMethod):
     def calculate_weights(
-        self, metric_data: pl.LazyFrame, metric_columns: List[str]
+        self, metric_data: pd.DataFrame, metric_columns: List[str]
     ) -> Dict[str, float]:
         """
         Calculate equal weights for given metrics

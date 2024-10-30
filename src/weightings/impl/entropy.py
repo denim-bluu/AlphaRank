@@ -2,8 +2,8 @@ from dataclasses import dataclass
 from typing import Dict, List
 from src.weightings.base import WeightingMethod
 
-import polars as pl
 import numpy as np
+import pandas as pd
 
 
 @dataclass
@@ -17,22 +17,20 @@ class EntropyWeightingMetadata:
 
 class EntropyWeighting(WeightingMethod):
     def _calculate_entropy(
-        self, metric_data: pl.LazyFrame, metric_columns: List[str]
+        self, metric_data: pd.DataFrame, metric_columns: List[str]
     ) -> Dict[str, float]:
         """
         Calculate entropy for each metric
         """
         entropies = {}
         for col in metric_columns:
-            # Collect column values as a numpy array
-            values = metric_data.select(pl.col(col)).collect().to_numpy().flatten()
+            values = metric_data[col].to_numpy()
 
-            # Calculate probabilities
-            probs = values / np.sum(values)
-            probs = np.where(probs == 0, 1e-10, probs)  # Handle zero probabilities
+            probs = values / values.sum()
+            probs = np.where(probs == 0, 1e-10, probs)
 
             # Calculate entropy
-            entropy = -np.sum(probs * np.log(probs)) / np.log(len(values))
+            entropy = -np.sum(probs * np.log(probs)) / np.log(len(probs))
             entropies[col] = entropy
 
         return entropies
@@ -47,7 +45,7 @@ class EntropyWeighting(WeightingMethod):
         return weights
 
     def calculate_weights(
-        self, metric_data: pl.LazyFrame, metric_columns: List[str]
+        self, metric_data: pd.DataFrame, metric_columns: List[str]
     ) -> Dict[str, float]:
         """
         Calculate entropy-based weights for given metrics
